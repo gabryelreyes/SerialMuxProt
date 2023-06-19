@@ -162,7 +162,7 @@ struct Channel
 
 ### Channel Creation and Subscription
 
-![CreateSubscribeSequence](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/BlueAndi/RadonUlzer/main/doc/YAP/SubscribeSequence.puml)
+![CreateSubscribeSequence](http://www.plantuml.com/plantuml/proxy?cache=no&src=https://raw.githubusercontent.com/gabryelreyes/SerialMuxProt/main/doc/SubscribeSequence.puml)
 
 #### Channel Creation
 
