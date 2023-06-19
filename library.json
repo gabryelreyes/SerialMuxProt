@@ -1,0 +1,21 @@
+{
+    "name": "SerialMuxProt",
+    "version": "1.0.0",
+    "description": "Communication Protocol based on Streams. Uses Multiplexing to differenciate data channels.",
+    "keywords": "SerialMuxProt",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/gabryelreyes/SerialMuxProt"
+    },
+    "authors": [
+        {
+            "name": "gabryelreyes",
+            "url": "https://github.com/gabryelreyes",
+            "maintainer": true
+        }
+    ],
+    "license": "MIT",
+    "dependencies": {},
+    "frameworks": "*",
+    "platforms": "*"
+}
