@@ -1,4 +1,4 @@
-@startuml Synchronization Sequence YAPServer
+@startuml Synchronization Sequence SerialMuxProtServer
 Title Synchronization Sequence
 
 participant Server_1
