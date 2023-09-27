@@ -653,11 +653,11 @@ private:
      * @param[in]   size    Size of the destination buffer in byte.
      * @param[in]   value   Value.
      */
-    void uint32ToByteArray(uint8_t *buffer, size_t size, uint32_t value)
+    void uint32ToByteArray(uint8_t* buffer, size_t size, uint32_t value)
     {
         if ((nullptr != buffer) && (sizeof(uint32_t) <= size))
         {
-            uint16_t hiBytes = ((value >> 16U) & 0xFFFF);
+            uint16_t hiBytes  = ((value >> 16U) & 0xFFFF);
             uint16_t lowBytes = ((value >> 0U) & 0xFFFF);
 
             buffer[0U] = ((hiBytes >> 8U) & 0xFF);
@@ -674,7 +674,7 @@ private:
      * @param[out] value    Destination integer.
      * @returns true if succesfully parsed. Otherwise, false.
      */
-    bool byteArrayToUint32(const uint8_t *buffer, size_t size, uint32_t &value)
+    bool byteArrayToUint32(const uint8_t* buffer, size_t size, uint32_t& value)
     {
         bool isSuccess = false;
 
