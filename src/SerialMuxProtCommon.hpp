@@ -77,7 +77,8 @@ SOFTWARE.
 #define CONTROL_CHANNEL_NUMBER (0U)
 
 /** DLC of Heartbeat Command. */
-#define CONTROL_CHANNEL_PAYLOAD_LENGTH (CHANNEL_NAME_MAX_LEN + CONTROL_CHANNEL_PAYLOAD_DATA_LENGTH + CONTROL_CHANNEL_CMD_BYTE_LENGTH)
+#define CONTROL_CHANNEL_PAYLOAD_LENGTH                                                                                 \
+    (CHANNEL_NAME_MAX_LEN + CONTROL_CHANNEL_PAYLOAD_DATA_LENGTH + CONTROL_CHANNEL_CMD_BYTE_LENGTH)
 
 /** Index of the Command Byte of the Control Channel*/
 #define CONTROL_CHANNEL_COMMAND_INDEX (0U)
