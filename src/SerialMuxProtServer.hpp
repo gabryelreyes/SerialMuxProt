@@ -763,9 +763,9 @@ private:
 
 private:
     /* Not allowed. */
-    SerialMuxProtServer();
-    SerialMuxProtServer(const SerialMuxProtServer& avg);
-    SerialMuxProtServer& operator=(const SerialMuxProtServer& avg);
+    SerialMuxProtServer(); /**< Default Constructor */
+    SerialMuxProtServer(const SerialMuxProtServer& avg); /**< Copy Constructor */
+    SerialMuxProtServer& operator=(const SerialMuxProtServer& avg); /**< Assignment Operator */
 };
 
 /******************************************************************************

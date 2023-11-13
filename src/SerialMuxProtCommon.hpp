@@ -125,11 +125,13 @@ struct Channel
 /** Data container of the Frame Fields */
 typedef union _Frame
 {
+    /** Frame Fields */
     struct _Fields
     {
         /** Header */
         union _Header
         {
+            /** Header Fields Struct */
             struct _HeaderFields
             {
                 /** Channel ID */
@@ -141,12 +143,12 @@ typedef union _Frame
                 /** Frame Checksum */
                 uint8_t m_checksum;
 
-            } __attribute__((packed)) headerFields;
+            } __attribute__((packed)) headerFields; /**< Header Fields */
 
             /** Raw Header Data*/
             uint8_t rawHeader[HEADER_LEN];
 
-        } __attribute__((packed)) header;
+        } __attribute__((packed)) header; /**< Header */
 
         /** Payload */
         struct _Payload
@@ -154,14 +156,14 @@ typedef union _Frame
             /** Data of the Frame */
             uint8_t m_data[MAX_DATA_LEN];
 
-        } __attribute__((packed)) payload;
+        } __attribute__((packed)) payload; /**< Payload */
 
-    } __attribute__((packed)) fields;
+    } __attribute__((packed)) fields; /**< Frame Fields */
 
     /** Raw Frame Data */
     uint8_t raw[MAX_FRAME_LEN] = {0U};
 
-} __attribute__((packed)) Frame;
+} __attribute__((packed)) Frame; /**< Frame */
 
 /**
  * Enumeration of Commands of Control Channel.
