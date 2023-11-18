@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright (c) 2023 Andreas Merkle <web@blue-andi.de>
+ * Copyright (c) 2023 Gabryel Reyes <gabryelrdiaz@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -763,8 +763,8 @@ private:
 
 private:
     /* Not allowed. */
-    SerialMuxProtServer(); /**< Default Constructor */
-    SerialMuxProtServer(const SerialMuxProtServer& avg); /**< Copy Constructor */
+    SerialMuxProtServer();                                          /**< Default Constructor */
+    SerialMuxProtServer(const SerialMuxProtServer& avg);            /**< Copy Constructor */
     SerialMuxProtServer& operator=(const SerialMuxProtServer& avg); /**< Assignment Operator */
 };
 
