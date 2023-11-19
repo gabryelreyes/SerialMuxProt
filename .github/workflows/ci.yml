@@ -149,4 +149,4 @@ jobs:
           pip install --upgrade platformio
 
       - name: Run tests on native environment
-        run: platformio ci examples\cpp\* --lib . -c platformio.ini -e esp32dev
+        run: platformio ci examples/cpp/* --lib . -c platformio.ini -e esp32dev
