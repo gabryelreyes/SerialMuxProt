@@ -64,8 +64,22 @@ class SerialMuxProtServer
 public:
     /**
      * Construct the SerialMuxProt Server.
+     *
+     * @param[in] stream Stream for input and output of data.
+     * @note The Stream is given as parameter to the constructor. This means, it cannot be used for other purposes.
      */
-    SerialMuxProtServer(Stream& stream) :
+    SerialMuxProtServer(Stream& stream) : SerialMuxProtServer(stream, nullptr)
+    {
+    }
+
+    /**
+     * Construct the SerialMuxProt Server.
+     *
+     * @param[in] stream Stream for input and output of data.
+     * @note The Stream is given as parameter to the constructor. This means, it cannot be used for other purposes.
+     * @param[in] userData User object to be passed to the callbacks.
+     */
+    SerialMuxProtServer(Stream& stream, void* userData) :
         m_rxCallbacks{nullptr},
         m_isSynced(false),
         m_lastSyncCommand(0U),
@@ -76,7 +90,8 @@ public:
         m_rxAttempts(0U),
         m_numberOfTxChannels(0U),
         m_numberOfRxChannels(0U),
-        m_numberOfPendingChannels(0U)
+        m_numberOfPendingChannels(0U),
+        m_userData(userData)
     {
     }
 
@@ -469,7 +484,7 @@ private:
                     else if (nullptr != m_rxCallbacks[channelArrayIndex])
                     {
                         /* Callback */
-                        m_rxCallbacks[channelArrayIndex](m_receiveFrame.fields.payload.m_data, dlc);
+                        m_rxCallbacks[channelArrayIndex](m_receiveFrame.fields.payload.m_data, dlc, m_userData);
                     }
                 }
 
@@ -760,6 +775,11 @@ private:
      * Number of Pending Channels to subscribe.
      */
     uint8_t m_numberOfPendingChannels;
+
+    /**
+     * User data to be passed to the callbacks.
+     */
+    void* m_userData;
 
 private:
     /* Not allowed. */

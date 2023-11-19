@@ -53,7 +53,7 @@
  * Prototypes
  *****************************************************************************/
 
-static void gCounterChannelCallback(const uint8_t *payload, const uint8_t payloadSize);
+static void gCounterChannelCallback(const uint8_t* payload, const uint8_t payloadSize, void* userData);
 
 /******************************************************************************
  * Local Variables
@@ -122,19 +122,20 @@ void loop()
  *
  * @param[in] payload       Counter in digits.
  * @param[in] payloadSize   Size of one counter.
+ * @param[in] userData      User data provided by the application.
  */
-void gCounterChannelCallback(const uint8_t *payload, const uint8_t payloadSize)
+void gCounterChannelCallback(const uint8_t* payload, const uint8_t payloadSize, void* userData)
 {
     if ((nullptr != payload) && (COUNTER_CHANNEL_DLC == payloadSize))
     {
-        const Counter *counterData = reinterpret_cast<const Counter *>(payload);
+        const Counter* counterData = reinterpret_cast<const Counter*>(payload);
 
         /* Send as many timestamps as the counter is set. */
         for (uint32_t i = 0U; i < counterData->count; i++)
         {
             Timestamp timestampData;
             timestampData.timestamp = millis();
-            gSmpServer.sendData(gSerialMuxProtChannelIdTimestamp, reinterpret_cast<uint8_t *>(&timestampData),
+            gSmpServer.sendData(gSerialMuxProtChannelIdTimestamp, reinterpret_cast<uint8_t*>(&timestampData),
                                 sizeof(timestampData));
         }
     }

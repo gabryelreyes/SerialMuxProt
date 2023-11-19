@@ -102,8 +102,12 @@ SOFTWARE.
 /**
  * Channel Notification Prototype Callback.
  * Provides the received data in the respective channel to the application.
+ *
+ * @param[in] payload       Received data.
+ * @param[in] payloadSize   Size of the received data.
+ * @param[in] userData      User data provided by the application.
  */
-typedef void (*ChannelCallback)(const uint8_t* payload, const uint8_t payloadSize);
+typedef void (*ChannelCallback)(const uint8_t* payload, const uint8_t payloadSize, void* userData);
 
 /**
  * Channel Definition.
