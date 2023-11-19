@@ -31,16 +31,17 @@
 import sys
 import time
 from struct import Struct
-import keyboard # pylint: disable=import-error
+import keyboard  # pylint: disable=import-error
 import numpy as np
 from SerialMuxProt import SerialMuxProt
-from socket_client import SocketClient
+# from socket_client import SocketClient
+from serial_client import SerialClient
 
 ################################################################################
 # Variables
 ################################################################################
 
-g_socket = SocketClient("localhost", 65432)
+g_socket = SerialClient("COM3", 115200)
 smp_server = SerialMuxProt(10, g_socket)
 START_TIME = round(time.time()*1000)
 
@@ -70,7 +71,18 @@ def callback_line_sensors(payload: bytearray) -> None:
     data = unpacker.unpack_from(payload)
     print(np.array(data, dtype=np.int16))
 
-def callback_remote_response(payload:bytearray) -> None:
+
+def callback_timestamp(payload: bytearray) -> None:
+    """ Callback of TIMESTAMP Channel """
+
+    print(payload.hex())
+
+    # unpacker = Struct(">HH")
+    # data = unpacker.unpack_from(payload)
+    # print(np.array(data, dtype=np.int16))
+
+
+def callback_remote_response(payload: bytearray) -> None:
     """ Callback of REMOTE_CMD Channel """
     if payload == b'\x00':
         print("Command OK")
@@ -79,18 +91,20 @@ def callback_remote_response(payload:bytearray) -> None:
     elif payload == b'\x02':
         print("Command Error")
 
+
 def send_motor_setpoints(set_point_left: int, set_point_right: int):
     """
     Send Motor Setpoints
     """
-
-    packer = Struct(">H")
     payload = bytearray()
-    payload.extend(packer.pack(set_point_left))
-    payload.extend(packer.pack(set_point_right))
+    payload.append(0x01)
+    payload.append(0x00)
+    payload.append(0x00)
+    payload.append(0x00)
 
     if len(payload) == 4:
-        smp_server.send_data("MOT_SPEEDS", payload)
+        smp_server.send_data("COUNTER", payload)
+
 
 def send_command(command: str) -> None:
     """Send command to RadonUlzer"""
@@ -121,22 +135,28 @@ def main():
         print(err)
         return
 
-    smp_server.create_channel("MOT_SPEEDS", 4)
-    smp_server.create_channel("REMOTE_CMD", 1)
-    smp_server.subscribe_to_channel("REMOTE_RSP", callback_remote_response)
-    smp_server.subscribe_to_channel("LINE_SENS", callback_line_sensors)
+    # smp_server.create_channel("MOT_SPEEDS", 4)
+    # smp_server.create_channel("REMOTE_CMD", 1)
+    # smp_server.subscribe_to_channel("REMOTE_RSP", callback_remote_response)
+    # smp_server.subscribe_to_channel("LINE_SENS", callback_line_sensors)
+    smp_server.subscribe_to_channel("TIMESTAMP", callback_timestamp)
+    smp_server.create_channel("COUNTER", 4)
 
     keyboard.on_press_key("w", lambda e: send_motor_setpoints(0x8000, 0x8000))
-    keyboard.on_press_key("s", lambda e: send_motor_setpoints(0x7FFF, 0x7FFF))
-    keyboard.on_press_key("a", lambda e: send_motor_setpoints(0x7FFF, 0x8000))
-    keyboard.on_press_key("d", lambda e: send_motor_setpoints(0x8000, 0x7FFF))
-    keyboard.on_release_key("w", lambda e: send_motor_setpoints(0x0000, 0x0000))
-    keyboard.on_release_key("a", lambda e: send_motor_setpoints(0x0000, 0x0000))
-    keyboard.on_release_key("s", lambda e: send_motor_setpoints(0x0000, 0x0000))
-    keyboard.on_release_key("d", lambda e: send_motor_setpoints(0x0000, 0x0000))
-    keyboard.on_press_key("l", lambda e: send_command("line_calib"))
-    keyboard.on_press_key("m", lambda e: send_command("motor_calib"))
-    keyboard.on_press_key("e", lambda e: send_command("enable_drive"))
+    # keyboard.on_press_key("s", lambda e: send_motor_setpoints(0x7FFF, 0x7FFF))
+    # keyboard.on_press_key("a", lambda e: send_motor_setpoints(0x7FFF, 0x8000))
+    # keyboard.on_press_key("d", lambda e: send_motor_setpoints(0x8000, 0x7FFF))
+    # keyboard.on_release_key(
+    #     "w", lambda e: send_motor_setpoints(0x0000, 0x0000))
+    # keyboard.on_release_key(
+    #     "a", lambda e: send_motor_setpoints(0x0000, 0x0000))
+    # keyboard.on_release_key(
+    #     "s", lambda e: send_motor_setpoints(0x0000, 0x0000))
+    # keyboard.on_release_key(
+    #     "d", lambda e: send_motor_setpoints(0x0000, 0x0000))
+    # keyboard.on_press_key("l", lambda e: send_command("line_calib"))
+    # keyboard.on_press_key("m", lambda e: send_command("motor_calib"))
+    # keyboard.on_press_key("e", lambda e: send_command("enable_drive"))
 
     while True:
         if (millis() - last_time) >= 5:
