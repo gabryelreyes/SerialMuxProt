@@ -167,13 +167,16 @@ enum COMMANDS : uint8_t
     SCRB_RSP,    /**< Subscribe Response */
 };
 
+/**
+ * Command Channel Payload Structure.
+ */
 typedef struct _Command
 {
-    uint8_t  commandByte;
-    uint32_t timestamp;
-    uint8_t  channelNumber;
-    char     channelName[CHANNEL_NAME_MAX_LEN];
-} __attribute__((packed)) Command;
+    uint8_t  commandByte;                       /**< Command Byte */
+    uint32_t timestamp;                         /**< Timestamp */
+    uint8_t  channelNumber;                     /**< Channel Number */
+    char     channelName[CHANNEL_NAME_MAX_LEN]; /**< Channel Name */
+} __attribute__((packed)) Command;              /**< Command */
 
 #endif /* SERIALMUXPROT_COMMON_H_ */
 /** @} */
