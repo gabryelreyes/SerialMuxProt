@@ -67,24 +67,11 @@ SOFTWARE.
 /** Max length of channel name */
 #define CHANNEL_NAME_MAX_LEN (10U)
 
-/** Available Bytes in Control Channel Payload for data. */
-#define CONTROL_CHANNEL_PAYLOAD_DATA_LENGTH (4U)
-
-/* Length of Command in Bytes */
-#define CONTROL_CHANNEL_CMD_BYTE_LENGTH (1U)
-
 /** Number of Control Channel. */
 #define CONTROL_CHANNEL_NUMBER (0U)
 
-/** DLC of Heartbeat Command. */
-#define CONTROL_CHANNEL_PAYLOAD_LENGTH                                                                                 \
-    (CHANNEL_NAME_MAX_LEN + CONTROL_CHANNEL_PAYLOAD_DATA_LENGTH + CONTROL_CHANNEL_CMD_BYTE_LENGTH)
-
-/** Index of the Command Byte of the Control Channel*/
-#define CONTROL_CHANNEL_COMMAND_INDEX (0U)
-
-/** Index of the start of the payload of the Control Channel*/
-#define CONTROL_CHANNEL_PAYLOAD_INDEX (1U)
+/** DLC of Control Channel Payload. */
+#define CONTROL_CHANNEL_PAYLOAD_LENGTH (sizeof(Command))
 
 /** Period of Heartbeat when Synced. */
 #define HEATBEAT_PERIOD_SYNCED (5000U)
@@ -179,6 +166,14 @@ enum COMMANDS : uint8_t
     SCRB,        /**< Subscribe Command */
     SCRB_RSP,    /**< Subscribe Response */
 };
+
+typedef struct _Command
+{
+    uint8_t  commandByte;
+    uint32_t timestamp;
+    uint8_t  channelNumber;
+    char     channelName[CHANNEL_NAME_MAX_LEN];
+} __attribute__((packed)) Command;
 
 #endif /* SERIALMUXPROT_COMMON_H_ */
 /** @} */
