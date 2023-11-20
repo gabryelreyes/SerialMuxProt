@@ -135,8 +135,7 @@ void gCounterChannelCallback(const uint8_t* payload, const uint8_t payloadSize, 
         {
             Timestamp timestampData;
             timestampData.timestamp = millis();
-            gSmpServer.sendData(gSerialMuxProtChannelIdTimestamp, reinterpret_cast<uint8_t*>(&timestampData),
-                                sizeof(timestampData));
+            gSmpServer.sendData(gSerialMuxProtChannelIdTimestamp, &timestampData, sizeof(timestampData));
         }
     }
 }
