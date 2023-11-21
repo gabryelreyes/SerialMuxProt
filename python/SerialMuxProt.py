@@ -59,7 +59,8 @@ class SerialMuxProtConstants:
     CONTROL_CHANNEL_NUMBER = 0  # Number of Control Channel.
     CONTROL_CHANNEL_PAYLOAD_LENGTH = CHANNEL_NAME_MAX_LEN + \
         CONTROL_CHANNEL_PAYLOAD_DATA_LENGTH + \
-        CONTROL_CHANNEL_CMD_BYTE_LENGTH + 1  # DLC of Heartbeat Command.
+        CONTROL_CHANNEL_CMD_BYTE_LENGTH + \
+        CHANNEL_LEN  # DLC of Heartbeat Command.
     # Index of the Command Byte of the Control Channel
     CONTROL_CHANNEL_COMMAND_INDEX = 0
     # Index of the start of the payload of the Control Channel
