@@ -12,6 +12,7 @@ The SerialMuxProt is being developed for the communication between the Zumo Robo
   - [SCRB](#scrb)
   - [SCRB_RSP](#scrb)
 - [Internal Architecture](#internal-architecture)
+- [SerialMuxChannels](#serialmuxchannels)
 
 ---
 
@@ -206,3 +207,12 @@ typedef void (*ChannelCallback)(const uint8_t* payload, const uint8_t payloadSiz
 
 - Client is connected and responds to SYNC Commands.
 - SYNC Period set to 5 seconds.
+
+---
+
+## SerialMuxChannels
+
+The `SerialMuxChannels.h` file should be used to define the structures and channel information to be shared between two instances of the SerialMuxServer.
+This file defines the Channel Names, DLCs, and the data structures of the payloads.
+It is important to note that the structs must include the `packed` attribute in order to ensure the access to the data correctly.
+A sample file can be found in [here](examples/SerialMuxChannels.h).
