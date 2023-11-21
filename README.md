@@ -1,9 +1,11 @@
 # Serial Multiplexer Protocol (SerialMuxProt)
 
-The SerialMuxProt is being developed for the communication between the Zumo Robot and a client application.
+Communication Protocol based on Streams. Uses Multiplexing to differentiate data channels.
+It is originally being developed for the communication between the [RadonUlzer](https://github.com/BlueAndi/RadonUlzer) and the [DroidControlShip](https://github.com/BlueAndi/DroidControlShip) projects.
 
 ## Table of Contents
 
+- [Installation](#installation)
 - [Network Architecture](#network-architecture)
 - [Frame](#frame)
 - [Control Channel](#control-channel-channel-0)
@@ -15,6 +17,21 @@ The SerialMuxProt is being developed for the communication between the Zumo Robo
 - [SerialMuxChannels](#serialmuxchannels)
 
 ---
+
+## Installation
+
+- Using PlatformIO CLI:
+
+```bash
+pio pkg install --library "gabryelreyes/SerialMuxProt@^2.0.0"
+```
+
+- Adding library to `lib_deps` manually:
+
+```ini
+lib_deps =
+    gabryelreyes/SerialMuxProt@^2.0.0
+```
 
 ## Network Architecture
 
