@@ -303,8 +303,11 @@ private:
     {
         Command output = {.commandByte = COMMANDS::SCRB_RSP, .channelNumber = getTxChannelNumber(channelName)};
 
+        /* Using strnlen in case the name is not null-terminated. */
+        uint8_t nameLength = strnlen(channelName, CHANNEL_NAME_MAX_LEN);
+
         /* Name is always sent back. */
-        memcpy(&output.channelName, channelName, CHANNEL_NAME_MAX_LEN);
+        memcpy(output.channelName, channelName, nameLength);
 
         if (false == send(CONTROL_CHANNEL_NUMBER, &output, sizeof(Command)))
         {
@@ -532,8 +535,10 @@ private:
                 if (nullptr != m_pendingSuscribeChannels[idx].m_callback)
                 {
                     /* Suscribe to channel. */
-                    Command output = {.commandByte = COMMANDS::SCRB};
-                    memcpy(&output.channelName, m_pendingSuscribeChannels[idx].m_name, CHANNEL_NAME_MAX_LEN);
+                    /* Using strnlen in case the name is not null-terminated. */
+                    uint8_t nameLength = strnlen(m_pendingSuscribeChannels[idx].m_name, CHANNEL_NAME_MAX_LEN);
+                    Command output     = {.commandByte = COMMANDS::SCRB};
+                    memcpy(output.channelName, m_pendingSuscribeChannels[idx].m_name, nameLength);
 
                     if (false == send(CONTROL_CHANNEL_NUMBER, &output, sizeof(Command)))
                     {
