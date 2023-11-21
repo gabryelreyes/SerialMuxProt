@@ -46,35 +46,23 @@
  *****************************************************************************/
 
 /** Maximum number of SerialMuxProt Channels. */
-#define MAX_CHANNELS (2U)
+#define MAX_CHANNELS (10U)
 
-/** Name of Channel to send Timestamp to. */
-#define TIMESTAMP_CHANNEL_NAME "TIMESTAMP"
+/** Name of Channel to send LED data to. */
+#define LED_CHANNEL_NAME "LED"
 
-/** DLC of Timestamp Channel */
-#define TIMESTAMP_CHANNEL_DLC (sizeof(Timestamp))
-
-/** Name of Channel to send Counter to. */
-#define COUNTER_CHANNEL_NAME "COUNTER"
-
-/** DLC of Counter Channel */
-#define COUNTER_CHANNEL_DLC (sizeof(Counter))
+/** DLC of LED Channel */
+#define LED_CHANNEL_DLC (sizeof(LedData))
 
 /******************************************************************************
  * Types and Classes
  *****************************************************************************/
 
-/** Struct of the "Timestamp" channel payload. */
-typedef struct _Timestamp
+/** Struct of the LED channel payload. */
+typedef struct _LedData
 {
-    uint32_t timestamp; /**< Timestamp [ms]. */
-} __attribute__((packed)) Timestamp;
-
-/** Struct of the "Counter" channel payload. */
-typedef struct _Counter
-{
-    uint32_t count; /**< Count [digits]. */
-} __attribute__((packed)) Counter;
+    int state;                     /**< Enable LED. */
+} __attribute__((packed)) LedData; /**< LED Channel payload. */
 
 /******************************************************************************
  * Functions

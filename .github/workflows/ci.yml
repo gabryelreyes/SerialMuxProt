@@ -148,5 +148,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install --upgrade platformio
 
-      - name: Run tests on native environment
-        run: platformio ci examples/cpp/* --lib . -c platformio.ini -e esp32dev
+      - name: Build example for ServerA
+        run: platformio ci examples/ServerA/* --lib . --lib examples/SerialMuxChannels.h -c platformio.ini -e esp32dev
+
+      - name: Build example for ServerB
+        run: platformio ci examples/ServerB/* --lib . --lib examples/SerialMuxChannels.h -c platformio.ini -e esp32dev

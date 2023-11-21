@@ -41,6 +41,10 @@
  * Compiler Switches
  *****************************************************************************/
 
+#ifndef LED_BUILTIN
+#define LED_BUILTIN (13U)
+#endif /* LED_BUILTIN */
+
 /******************************************************************************
  * Macros
  *****************************************************************************/
@@ -53,7 +57,7 @@
  * Prototypes
  *****************************************************************************/
 
-static void gCounterChannelCallback(const uint8_t* payload, const uint8_t payloadSize, void* userData);
+void gLedChannelCallback(const uint8_t* payload, const uint8_t payloadSize, void* userData);
 
 /******************************************************************************
  * Local Variables
@@ -70,9 +74,6 @@ static const uint32_t SERIAL_BAUDRATE = 115200U;
  */
 SerialMuxProtServer<MAX_CHANNELS> gSmpServer(Serial);
 
-/** SerialMuxProt Channel id for sending timestamps. */
-uint8_t gSerialMuxProtChannelIdTimestamp = 0U;
-
 /******************************************************************************
  * Public Methods
  *****************************************************************************/
@@ -85,11 +86,11 @@ void setup()
     /* Initialize Serial */
     Serial.begin(SERIAL_BAUDRATE);
 
-    /* Create Channel for sending timestamps. */
-    gSerialMuxProtChannelIdTimestamp = gSmpServer.createChannel(TIMESTAMP_CHANNEL_NAME, TIMESTAMP_CHANNEL_DLC);
+    /* Initialize LED. */
+    pinMode(LED_BUILTIN, OUTPUT);
 
-    /* Subscribe to channel for receiving a counter. */
-    gSmpServer.subscribeToChannel(COUNTER_CHANNEL_NAME, gCounterChannelCallback);
+    /* Subscribe to LED data Channel. */
+    gSmpServer.subscribeToChannel(LED_CHANNEL_NAME, gLedChannelCallback);
 }
 
 /**
@@ -124,18 +125,14 @@ void loop()
  * @param[in] payloadSize   Size of one counter.
  * @param[in] userData      User data provided by the application.
  */
-void gCounterChannelCallback(const uint8_t* payload, const uint8_t payloadSize, void* userData)
+void gLedChannelCallback(const uint8_t* payload, const uint8_t payloadSize, void* userData)
 {
-    if ((nullptr != payload) && (COUNTER_CHANNEL_DLC == payloadSize))
+    if ((nullptr != payload) && (LED_CHANNEL_DLC == payloadSize))
     {
-        const Counter* counterData = reinterpret_cast<const Counter*>(payload);
+        /* Cast payload to Channel Payload Struct. */
+        const LedData* ledData = reinterpret_cast<const LedData*>(payload);
 
-        /* Send as many timestamps as the counter is set. */
-        for (uint32_t i = 0U; i < counterData->count; i++)
-        {
-            Timestamp timestampData;
-            timestampData.timestamp = millis();
-            gSmpServer.sendData(gSerialMuxProtChannelIdTimestamp, &timestampData, sizeof(timestampData));
-        }
+        /* Set LED state. */
+        digitalWrite(LED_BUILTIN, ledData->state);
     }
 }
