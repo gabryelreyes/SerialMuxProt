@@ -59,7 +59,8 @@ class SerialMuxProtConstants:
     CONTROL_CHANNEL_NUMBER = 0  # Number of Control Channel.
     CONTROL_CHANNEL_PAYLOAD_LENGTH = CHANNEL_NAME_MAX_LEN + \
         CONTROL_CHANNEL_PAYLOAD_DATA_LENGTH + \
-        CONTROL_CHANNEL_CMD_BYTE_LENGTH  # DLC of Heartbeat Command.
+        CONTROL_CHANNEL_CMD_BYTE_LENGTH + \
+        CHANNEL_LEN  # DLC of Heartbeat Command.
     # Index of the Command Byte of the Control Channel
     CONTROL_CHANNEL_COMMAND_INDEX = 0
     # Index of the start of the payload of the Control Channel
@@ -76,6 +77,7 @@ class SerialMuxProtConstants:
         SYNC_RSP = 1
         SCRB = 2
         SCRB_RSP = 3
+
 
 @dataclass
 class Channel():
@@ -114,17 +116,19 @@ class Frame():
         self.raw[2] = self.checksum
         self.raw[3:] = self.payload
 
+
 @dataclass
 class ChannelArrays:
     """ Container Class for Channel Arrays and their counters """
 
     def __init__(self, max_configured_channels: int) -> None:
-        self.number_of_rx_channels      = 0
-        self.number_of_tx_channels      = 0
+        self.number_of_rx_channels = 0
+        self.number_of_tx_channels = 0
         self.number_of_pending_channels = 0
-        self.rx_channels        = [Channel() for x in range(max_configured_channels)]
-        self.tx_channels        = [Channel() for x in range(max_configured_channels)]
-        self.pending_channels   = [Channel() for x in range(max_configured_channels)]
+        self.rx_channels = [Channel() for x in range(max_configured_channels)]
+        self.tx_channels = [Channel() for x in range(max_configured_channels)]
+        self.pending_channels = [Channel()
+                                 for x in range(max_configured_channels)]
 
 
 @dataclass
@@ -136,6 +140,7 @@ class SyncData:
         self.last_sync_response = 0
         self.last_sync_command = 0
 
+
 @dataclass
 class RxData:
     """ Container Dataclass for Receive Data and counters. """
@@ -144,6 +149,7 @@ class RxData:
         self.received_bytes = 0
         self.rx_attempts = 0
         self.receive_frame = Frame()
+
 
 class SerialMuxProt:
     """ SerialMuxProt Server """
@@ -342,7 +348,8 @@ class SerialMuxProt:
 
             # DLC = 0 means that the channel does not exist.
             if (0 != dlc) and (SerialMuxProtConstants.MAX_RX_ATTEMPTS >= self.__rx_data.rx_attempts):
-                remaining_payload_bytes = self.__rx_data.received_bytes - SerialMuxProtConstants.HEADER_LEN
+                remaining_payload_bytes = self.__rx_data.received_bytes - \
+                    SerialMuxProtConstants.HEADER_LEN
                 expected_bytes = dlc - remaining_payload_bytes
                 self.__rx_data.rx_attempts += 1
 
@@ -393,7 +400,7 @@ class SerialMuxProt:
                     request = bytearray(
                         SerialMuxProtConstants.CONTROL_CHANNEL_PAYLOAD_LENGTH)
                     request[0] = SerialMuxProtConstants.Commands.SCRB
-                    request[1:] = bytearray(pending_channel.name, 'ascii')
+                    request[6:] = bytearray(pending_channel.name, 'ascii')
 
                     # Pad array if necessary
                     request = request.ljust(
@@ -521,7 +528,8 @@ class SerialMuxProt:
             Command Data of received frame
         """
 
-        response = bytearray(SerialMuxProtConstants.CONTROL_CHANNEL_PAYLOAD_LENGTH)
+        response = bytearray(
+            SerialMuxProtConstants.CONTROL_CHANNEL_PAYLOAD_LENGTH)
         response[SerialMuxProtConstants.CONTROL_CHANNEL_COMMAND_INDEX] = SerialMuxProtConstants.Commands.SYNC_RSP
         response[SerialMuxProtConstants.CONTROL_CHANNEL_PAYLOAD_INDEX:] = payload
 
@@ -558,11 +566,12 @@ class SerialMuxProt:
             Command Data of received frame
         """
 
-        response = bytearray(SerialMuxProtConstants.CONTROL_CHANNEL_PAYLOAD_LENGTH)
+        response = bytearray(
+            SerialMuxProtConstants.CONTROL_CHANNEL_PAYLOAD_LENGTH)
         response[SerialMuxProtConstants.CONTROL_CHANNEL_COMMAND_INDEX] = SerialMuxProtConstants.Commands.SCRB_RSP
 
         # Parse name
-        channel_name = str(payload, "ascii").strip('\x00')
+        channel_name = str(payload[5:], "ascii").strip('\x00')
         response[1] = self.get_tx_channel_number(channel_name)
 
         # Name is always sent back.
@@ -586,8 +595,8 @@ class SerialMuxProt:
         """
 
         # Parse payload
-        channel_number = payload[0]
-        channel_name = str(payload[1:], "ascii").strip('\x00')
+        channel_number = payload[4]
+        channel_name = str(payload[5:], "ascii").strip('\x00')
 
         if (self.__max_configured_channels >= channel_number) and \
            (0 < self.__channels.number_of_pending_channels):

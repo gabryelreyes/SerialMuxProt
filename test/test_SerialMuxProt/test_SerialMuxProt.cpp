@@ -37,7 +37,7 @@
 #include <unity.h>
 #include <TestStream.h>
 #include <SerialMuxProtServer.hpp>
-
+#include <stdio.h>
 /******************************************************************************
  * Compiler Switches
  *****************************************************************************/
@@ -56,7 +56,7 @@
 
 static void setup();
 static void loop();
-static void testChannelCallback(const uint8_t *payload, uint8_t payloadSize);
+static void testChannelCallback(const uint8_t* payload, uint8_t payloadSize);
 static void testCmdSync();
 static void testCmdSyncRsp();
 static void testCmdScrb();
@@ -68,11 +68,11 @@ static void testDataSend();
  * Local Variables
  *****************************************************************************/
 
-static uint8_t emptyOutputBuffer[MAX_FRAME_LEN];
-static TestStream gTestStream;
+static uint8_t       emptyOutputBuffer[MAX_FRAME_LEN];
+static TestStream    gTestStream;
 static const uint8_t controlChannelFrameLength = (HEADER_LEN + CONTROL_CHANNEL_PAYLOAD_LENGTH);
-static const uint8_t testPayload[4U] = {0x12, 0x34, 0x56, 0x78};
-static bool callbackCalled = false;
+static const uint8_t testPayload[4U]           = {0x12, 0x34, 0x56, 0x78};
+static bool          callbackCalled            = false;
 
 /******************************************************************************
  * Public Methods
@@ -95,7 +95,7 @@ static bool callbackCalled = false;
  * @param[in] argc  Number of arguments
  * @param[in] argv  Arguments
  */
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
     setup(); /* Prepare test */
     loop();  /* Run test once */
@@ -165,8 +165,9 @@ extern void tearDown(void)
  * Callback for incoming data from test channel.
  * @param[in] payload Byte buffer containing incomming data.
  * @param[in] payloadSize Number of bytes received.
+ * @param[in] userData      User data provided by the application.
  */
-static void testChannelCallback(const uint8_t *payload, uint8_t payloadSize)
+static void testChannelCallback(const uint8_t* payload, uint8_t payloadSize, void* userData)
 {
     callbackCalled = true;
     TEST_ASSERT_EQUAL_UINT8_ARRAY(testPayload, payload, payloadSize);
@@ -178,15 +179,15 @@ static void testChannelCallback(const uint8_t *payload, uint8_t payloadSize)
 static void testCmdSync()
 {
     SerialMuxProtServer<2U> testSerialMuxProtServer(gTestStream);
-    uint8_t expectedOutputBufferVector[6U][MAX_FRAME_LEN] = {
-        {0x00, 0x0F, 0xFA, 0x00, 0x00, 0x00, 0x03, 0xE8}, /* SYNC 1000ms*/
-        {0x00, 0x0F, 0xE6, 0x00, 0x00, 0x00, 0x07, 0xD0}, /* SYNC 2000ms*/
-        {0x00, 0x0F, 0x82, 0x00, 0x00, 0x00, 0x1B, 0x58}, /* SYNC 7000ms*/
-        {0x00, 0x0F, 0x1E, 0x00, 0x00, 0x00, 0x2E, 0xE0}, /* SYNC 12000ms*/
-        {0x00, 0x0F, 0xB9, 0x00, 0x00, 0x00, 0x42, 0x68}  /* SYNC 17000ms*/
+    uint8_t                 expectedOutputBufferVector[6U][MAX_FRAME_LEN] = {
+        {0x00, 0x10, 0xFB, 0x00, 0xE8, 0x03, 0x00, 0x00}, /* SYNC 1000ms*/
+        {0x00, 0x10, 0xE7, 0x00, 0xD0, 0x07, 0x00, 0x00}, /* SYNC 2000ms*/
+        {0x00, 0x10, 0x83, 0x00, 0x58, 0x1B, 0x00, 0x00}, /* SYNC 7000ms*/
+        {0x00, 0x10, 0x1F, 0x00, 0xE0, 0x2E, 0x00, 0x00}, /* SYNC 12000ms*/
+        {0x00, 0x10, 0xBA, 0x00, 0x68, 0x42, 0x00, 0x00}  /* SYNC 17000ms*/
     };
-    uint8_t inputQueueVector[2U][MAX_FRAME_LEN] = {{0x00, 0x0F, 0xE7, 0x01, 0x00, 0x00, 0x07, 0xD0},
-                                                   {0x00, 0x0F, 0x83, 0x01, 0x00, 0x00, 0x1B, 0x58}};
+    uint8_t inputQueueVector[2U][MAX_FRAME_LEN] = {{0x00, 0x10, 0xE8, 0x01, 0xD0, 0x07, 0x00, 0x00},
+                                                   {0x00, 0x10, 0x84, 0x01, 0x58, 0x1B, 0x00, 0x00}};
 
     /*
      * Case: Unsynced Heartbeat.
@@ -289,15 +290,15 @@ static void testCmdSync()
 static void testCmdSyncRsp()
 {
     SerialMuxProtServer<2U> testSerialMuxProtServer(gTestStream);
-    uint8_t testTime = 0U;
-    uint8_t numberOfCases = 3U;
-    uint8_t expectedOutputBufferVector[numberOfCases][MAX_FRAME_LEN] = {
-        {0x00, 0x0F, 0x10, 0x01, 0x00, 0x00, 0x00, 0x00},
-        {0x00, 0x0F, 0x25, 0x01, 0x12, 0x34, 0x56, 0x78},
-        {0x00, 0x0F, 0x10, 0x01, 0xFF, 0xFF, 0xFF, 0xFF}};
-    uint8_t inputQueueVector[numberOfCases][MAX_FRAME_LEN] = {{0x00, 0x0F, 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00},
-                                                              {0x00, 0x0F, 0x24, 0x00, 0x12, 0x34, 0x56, 0x78},
-                                                              {0x00, 0x0F, 0x0F, 0x00, 0xFF, 0xFF, 0xFF, 0xFF}};
+    uint8_t                 testTime                                                 = 0U;
+    uint8_t                 numberOfCases                                            = 3U;
+    uint8_t                 expectedOutputBufferVector[numberOfCases][MAX_FRAME_LEN] = {
+        {0x00, 0x10, 0x11, 0x01, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x10, 0x26, 0x01, 0x78, 0x56, 0x34, 0x12},
+        {0x00, 0x10, 0x11, 0x01, 0xFF, 0xFF, 0xFF, 0xFF}};
+    uint8_t inputQueueVector[numberOfCases][MAX_FRAME_LEN] = {{0x00, 0x10, 0x10, 0x00, 0x00, 0x00, 0x00, 0x00},
+                                                              {0x00, 0x10, 0x25, 0x00, 0x78, 0x56, 0x34, 0x12},
+                                                              {0x00, 0x10, 0x10, 0x00, 0xFF, 0xFF, 0xFF, 0xFF}};
 
     /* Ignore SYNC */
     testSerialMuxProtServer.process(testTime++);
@@ -322,12 +323,13 @@ static void testCmdSyncRsp()
 static void testCmdScrb()
 {
     SerialMuxProtServer<2U> testSerialMuxProtServer(gTestStream);
-    uint8_t testTime = 0U;
-    uint8_t numberOfCases = 2U;
-    uint8_t expectedOutputBufferVector[numberOfCases][MAX_FRAME_LEN] = {
-        {0x00, 0x0F, 0x53, 0x03, 0x00, 'T', 'E', 'S', 'T'}, {0x00, 0x0F, 0x54, 0x03, 0x01, 'T', 'E', 'S', 'T'}};
+    uint8_t                 testTime                                                 = 0U;
+    uint8_t                 numberOfCases                                            = 2U;
+    uint8_t                 expectedOutputBufferVector[numberOfCases][MAX_FRAME_LEN] = {
+        {0x00, 0x10, 0x54, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 'T', 'E', 'S', 'T'},
+        {0x00, 0x10, 0x55, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01, 'T', 'E', 'S', 'T'}};
     uint8_t inputQueueVector[numberOfCases][MAX_FRAME_LEN] = {
-        {0x00, 0x0F, 0x52, 0x02, 'T', 'E', 'S', 'T', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
+        {0x00, 0x10, 0x53, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 'T', 'E', 'S', 'T', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
 
     /* Ignore SYNC */
     testSerialMuxProtServer.process(testTime++);
@@ -374,13 +376,14 @@ static void testCmdScrb()
 static void testCmdScrbRsp()
 {
     SerialMuxProtServer<2U> testSerialMuxProtServer(gTestStream);
-    uint8_t testTime = 1U;
-    uint8_t numberOfCases = 3U;
-    uint8_t expectedOutputBufferVector[numberOfCases][MAX_FRAME_LEN] = {
-        {0x00, 0x0F, 0x52, 0x02, 'T', 'E', 'S', 'T', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
-    uint8_t inputQueueVector[numberOfCases][MAX_FRAME_LEN] = {{0x00, 0x0F, 0x10, 0x01, 0x00, 0x00, 0x00},
-                                                              {0x00, 0x0F, 0x53, 0x03, 0x00, 'T', 'E', 'S', 'T'},
-                                                              {0x00, 0x0F, 0x54, 0x03, 0x01, 'T', 'E', 'S', 'T'}};
+    uint8_t                 testTime                                                 = 1U;
+    uint8_t                 numberOfCases                                            = 3U;
+    uint8_t                 expectedOutputBufferVector[numberOfCases][MAX_FRAME_LEN] = {
+        {0x00, 0x10, 0x53, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 'T', 'E', 'S', 'T', 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
+    uint8_t inputQueueVector[numberOfCases][MAX_FRAME_LEN] = {
+        {0x00, 0x10, 0x11, 0x01, 0x00, 0x00, 0x00, 0x00},
+        {0x00, 0x10, 0x54, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00, 'T', 'E', 'S', 'T'},
+        {0x00, 0x10, 0x55, 0x03, 0x00, 0x00, 0x00, 0x00, 0x01, 'T', 'E', 'S', 'T'}};
 
     /*
      * Case: Suscribe to Unknown Channel
@@ -462,7 +465,7 @@ static void testCmdScrbRsp()
  */
 static void testChannelCreation()
 {
-    const uint8_t maxChannels = 5U;
+    const uint8_t                    maxChannels = 5U;
     SerialMuxProtServer<maxChannels> testSerialMuxProtServer(gTestStream);
 
     /* No Channels Configured on Start */
@@ -505,7 +508,7 @@ static void testDataSend()
 {
     SerialMuxProtServer<1U> testSerialMuxProtServer(gTestStream);
     uint8_t expectedOutputBufferVector[1U][MAX_FRAME_LEN] = {{0x01, 0x04, 0x1A, 0x12, 0x34, 0x56, 0x78}};
-    uint8_t inputQueueVector[1U][MAX_FRAME_LEN] = {{0x00, 0x0F, 0x10, 0x01, 0x00, 0x00, 0x00}};
+    uint8_t inputQueueVector[1U][MAX_FRAME_LEN]           = {{0x00, 0x10, 0x11, 0x01, 0x00, 0x00, 0x00, 0x00}};
 
     /* Flush Stream */
     gTestStream.flushInputBuffer();

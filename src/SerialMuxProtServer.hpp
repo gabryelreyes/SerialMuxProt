@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright (c) 2023 Andreas Merkle <web@blue-andi.de>
+ * Copyright (c) 2023 Gabryel Reyes <gabryelrdiaz@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -64,8 +64,22 @@ class SerialMuxProtServer
 public:
     /**
      * Construct the SerialMuxProt Server.
+     *
+     * @param[in] stream Stream for input and output of data.
+     * @note The Stream is given as parameter to the constructor. This means, it cannot be used for other purposes.
      */
-    SerialMuxProtServer(Stream& stream) :
+    SerialMuxProtServer(Stream& stream) : SerialMuxProtServer(stream, nullptr)
+    {
+    }
+
+    /**
+     * Construct the SerialMuxProt Server.
+     *
+     * @param[in] stream Stream for input and output of data.
+     * @note The Stream is given as parameter to the constructor. This means, it cannot be used for other purposes.
+     * @param[in] userData User object to be passed to the callbacks.
+     */
+    SerialMuxProtServer(Stream& stream, void* userData) :
         m_rxCallbacks{nullptr},
         m_isSynced(false),
         m_lastSyncCommand(0U),
@@ -76,7 +90,8 @@ public:
         m_rxAttempts(0U),
         m_numberOfTxChannels(0U),
         m_numberOfRxChannels(0U),
-        m_numberOfPendingChannels(0U)
+        m_numberOfPendingChannels(0U),
+        m_userData(userData)
     {
     }
 
@@ -108,7 +123,7 @@ public:
      * @param[in] payloadSize Amount of bytes to send.
      * @returns If payload succesfully sent, returns true. Otherwise, false.
      */
-    bool sendData(uint8_t channelNumber, const uint8_t* payload, uint8_t payloadSize) const
+    bool sendData(uint8_t channelNumber, const void* payload, uint8_t payloadSize) const
     {
         bool isSent = false;
 
@@ -249,40 +264,30 @@ public:
 private:
     /**
      * Control Channel Command: SYNC
-     * @param[in] payload Incomming Command data
+     * @param[in] rcvTimestamp Incoming Timestamp from client.
      */
-    void cmdSYNC(const uint8_t* payload)
+    void cmdSYNC(const uint32_t rcvTimestamp)
     {
-        uint8_t buf[CONTROL_CHANNEL_PAYLOAD_LENGTH] = {COMMANDS::SYNC_RSP, payload[0U], payload[1U], payload[2U],
-                                                       payload[3U]};
+        Command output = {.commandByte = COMMANDS::SYNC_RSP, .timestamp = rcvTimestamp};
+
         /* Ignore return as SYNC_RSP can fail */
-        (void)send(CONTROL_CHANNEL_NUMBER, buf, sizeof(buf));
+        (void)send(CONTROL_CHANNEL_NUMBER, &output, sizeof(Command));
     }
 
     /**
      * Control Channel Command: SYNC_RSP
-     * @param[in] payload Incomming Command data
+     * @param[in] rcvTimestamp Incoming Timestamp from client.
      */
-    void cmdSYNC_RSP(const uint8_t* payload)
+    void cmdSYNC_RSP(const uint32_t rcvTimestamp)
     {
-        uint32_t rcvTimestamp = 0;
-
-        /* Using (payloadSize - 1U) as CMD Byte is not passed. */
-        if (true == byteArrayToUint32(payload, sizeof(uint32_t), rcvTimestamp))
+        /* Check Timestamp with m_lastSyncCommand */
+        if (rcvTimestamp == m_lastSyncCommand)
         {
-            /* Check Timestamp with m_lastSyncCommand */
-            if (rcvTimestamp == m_lastSyncCommand)
-            {
-                m_lastSyncResponse = m_lastSyncCommand;
-                m_isSynced         = true;
+            m_lastSyncResponse = m_lastSyncCommand;
+            m_isSynced         = true;
 
-                /* Manage Pending Subscriptions. */
-                managePendingSubscriptions();
-            }
-            else
-            {
-                m_isSynced = false;
-            }
+            /* Manage Pending Subscriptions. */
+            managePendingSubscriptions();
         }
         else
         {
@@ -292,17 +297,19 @@ private:
 
     /**
      * Control Channel Command: SCRB
-     * @param[in] payload Incomming Command data
+     * @param[in] channelName Incoming Channel Name
      */
-    void cmdSCRB(const uint8_t* payload)
+    void cmdSCRB(const char* channelName)
     {
-        uint8_t buf[CONTROL_CHANNEL_PAYLOAD_LENGTH] = {COMMANDS::SCRB_RSP};
-        buf[1U]                                     = getTxChannelNumber(reinterpret_cast<const char*>(payload));
+        Command output = {.commandByte = COMMANDS::SCRB_RSP, .channelNumber = getTxChannelNumber(channelName)};
+
+        /* Using strnlen in case the name is not null-terminated. */
+        uint8_t nameLength = strnlen(channelName, CHANNEL_NAME_MAX_LEN);
 
         /* Name is always sent back. */
-        memcpy(&buf[2U], payload, CHANNEL_NAME_MAX_LEN);
+        memcpy(output.channelName, channelName, nameLength);
 
-        if (false == send(CONTROL_CHANNEL_NUMBER, buf, sizeof(buf)))
+        if (false == send(CONTROL_CHANNEL_NUMBER, &output, sizeof(Command)))
         {
             /* Fall out of sync if failed to send. */
             m_isSynced = false;
@@ -311,14 +318,13 @@ private:
 
     /**
      * Control Channel Command: SCRB_RSP
-     * @param[in] payload Incomming Command data
+     * @param[in] channelName Incoming Channel Name
+     * @param[in] channelNumber Incoming Channel Number
      */
-    void cmdSCRB_RSP(const uint8_t* payload)
+    void cmdSCRB_RSP(const char* channelName, const uint8_t channelNumber)
     {
-        uint8_t        channelNumber = payload[0U];
-        const uint8_t* channelName   = &payload[1U];
-
-        if ((tMaxChannels >= channelNumber) && (nullptr != channelName) && (0U < m_numberOfPendingChannels))
+        if ((tMaxChannels >= channelNumber) && (0U != channelNumber) && (nullptr != channelName) &&
+            (0U < m_numberOfPendingChannels))
         {
             for (uint8_t idx = 0; idx < tMaxChannels; idx++)
             {
@@ -326,23 +332,19 @@ private:
                 if (nullptr != m_pendingSuscribeChannels[idx].m_callback)
                 {
                     /* Check if its the correct channel. */
-                    if (0U == strncmp(reinterpret_cast<const char*>(channelName), m_pendingSuscribeChannels[idx].m_name,
-                                      CHANNEL_NAME_MAX_LEN))
+                    if (0U == strncmp(channelName, m_pendingSuscribeChannels[idx].m_name, CHANNEL_NAME_MAX_LEN))
                     {
                         /* Channel is found in the Server. */
-                        if (0U != channelNumber)
+                        uint8_t channelArrayIndex = (channelNumber - 1U);
+
+                        /* Channel is empty. Increase Counter*/
+                        if (nullptr == m_rxCallbacks[channelArrayIndex])
                         {
-                            uint8_t channelArrayIndex = (channelNumber - 1U);
-
-                            /* Channel is empty. Increase Counter*/
-                            if (nullptr == m_rxCallbacks[channelArrayIndex])
-                            {
-                                /* Increase RX Channel Counter. */
-                                m_numberOfRxChannels++;
-                            }
-
-                            m_rxCallbacks[channelArrayIndex] = m_pendingSuscribeChannels[idx].m_callback;
+                            /* Increase RX Channel Counter. */
+                            m_numberOfRxChannels++;
                         }
+
+                        m_rxCallbacks[channelArrayIndex] = m_pendingSuscribeChannels[idx].m_callback;
 
                         /* Channel is no longer pending. */
                         m_pendingSuscribeChannels[idx].m_callback = nullptr;
@@ -363,35 +365,31 @@ private:
      */
     void callbackControlChannel(const uint8_t* payload, const uint8_t payloadSize)
     {
-        if ((nullptr == payload) || (CONTROL_CHANNEL_PAYLOAD_LENGTH != payloadSize))
+        if ((nullptr != payload) && (CONTROL_CHANNEL_PAYLOAD_LENGTH == payloadSize))
         {
-            return;
-        }
+            const Command* parsedPayload = reinterpret_cast<const Command*>(payload);
 
-        uint8_t        cmdByte = payload[CONTROL_CHANNEL_COMMAND_INDEX];
-        const uint8_t* cmdData = &payload[CONTROL_CHANNEL_PAYLOAD_INDEX];
+            switch (parsedPayload->commandByte)
+            {
+            case COMMANDS::SYNC:
+                cmdSYNC(parsedPayload->timestamp);
+                break;
 
-        switch (cmdByte)
-        {
+            case COMMANDS::SYNC_RSP:
+                cmdSYNC_RSP(parsedPayload->timestamp);
+                break;
 
-        case COMMANDS::SYNC:
-            cmdSYNC(cmdData);
-            break;
+            case COMMANDS::SCRB:
+                cmdSCRB(parsedPayload->channelName);
+                break;
 
-        case COMMANDS::SYNC_RSP:
-            cmdSYNC_RSP(cmdData);
-            break;
+            case COMMANDS::SCRB_RSP:
+                cmdSCRB_RSP(parsedPayload->channelName, parsedPayload->channelNumber);
+                break;
 
-        case COMMANDS::SCRB:
-            cmdSCRB(cmdData);
-            break;
-
-        case COMMANDS::SCRB_RSP:
-            cmdSCRB_RSP(cmdData);
-            break;
-
-        default:
-            break;
+            default:
+                break;
+            }
         }
     }
 
@@ -469,7 +467,7 @@ private:
                     else if (nullptr != m_rxCallbacks[channelArrayIndex])
                     {
                         /* Callback */
-                        m_rxCallbacks[channelArrayIndex](m_receiveFrame.fields.payload.m_data, dlc);
+                        m_rxCallbacks[channelArrayIndex](m_receiveFrame.fields.payload.m_data, dlc, m_userData);
                     }
                 }
 
@@ -516,12 +514,9 @@ private:
             }
 
             /* Send SYNC Command. */
-            uint8_t buf[CONTROL_CHANNEL_PAYLOAD_LENGTH] = {COMMANDS::SYNC};
+            Command payload = {.commandByte = COMMANDS::SYNC, .timestamp = currentTimestamp};
 
-            /* Using (sizeof(buf) - 1U) as CMD Byte is not passed. */
-            uint32ToByteArray(&buf[CONTROL_CHANNEL_PAYLOAD_INDEX], (sizeof(buf) - 1), currentTimestamp);
-
-            if (true == send(CONTROL_CHANNEL_NUMBER, buf, sizeof(buf)))
+            if (true == send(CONTROL_CHANNEL_NUMBER, &payload, sizeof(Command)))
             {
                 m_lastSyncCommand = currentTimestamp;
             }
@@ -540,11 +535,12 @@ private:
                 if (nullptr != m_pendingSuscribeChannels[idx].m_callback)
                 {
                     /* Suscribe to channel. */
-                    uint8_t buf[CONTROL_CHANNEL_PAYLOAD_LENGTH] = {COMMANDS::SCRB};
-                    memcpy(&buf[CONTROL_CHANNEL_PAYLOAD_INDEX], m_pendingSuscribeChannels[idx].m_name,
-                           CHANNEL_NAME_MAX_LEN);
+                    /* Using strnlen in case the name is not null-terminated. */
+                    uint8_t nameLength = strnlen(m_pendingSuscribeChannels[idx].m_name, CHANNEL_NAME_MAX_LEN);
+                    Command output     = {.commandByte = COMMANDS::SCRB};
+                    memcpy(output.channelName, m_pendingSuscribeChannels[idx].m_name, nameLength);
 
-                    if (false == send(CONTROL_CHANNEL_NUMBER, buf, sizeof(buf)))
+                    if (false == send(CONTROL_CHANNEL_NUMBER, &output, sizeof(Command)))
                     {
                         /* Out-of-Sync on failed send. */
                         m_isSynced = false;
@@ -562,7 +558,7 @@ private:
      * @param[in] payloadSize Amount of bytes to send.
      * @returns If payload succesfully sent, returns true. Otherwise, false.
      */
-    bool send(uint8_t channelNumber, const uint8_t* payload, uint8_t payloadSize) const
+    bool send(uint8_t channelNumber, const void* payload, uint8_t payloadSize) const
     {
         bool    frameSent  = false;
         uint8_t channelDLC = getTxChannelDLC(channelNumber);
@@ -646,51 +642,6 @@ private:
         return (sum % UINT8_MAX);
     }
 
-    /**
-     * Unsigned 32-bit integer to byte array.
-     * Endianness: Big endian.
-     * @param[out]  buffer  Destination array.
-     * @param[in]   size    Size of the destination buffer in byte.
-     * @param[in]   value   Value.
-     */
-    void uint32ToByteArray(uint8_t* buffer, size_t size, uint32_t value)
-    {
-        if ((nullptr != buffer) && (sizeof(uint32_t) <= size))
-        {
-            uint16_t hiBytes  = ((value >> 16U) & 0xFFFF);
-            uint16_t lowBytes = ((value >> 0U) & 0xFFFF);
-
-            buffer[0U] = ((hiBytes >> 8U) & 0xFF);
-            buffer[1U] = ((hiBytes >> 0U) & 0xFF);
-            buffer[2U] = ((lowBytes >> 8U) & 0xFF);
-            buffer[3U] = ((lowBytes >> 0U) & 0xFF);
-        }
-    }
-
-    /**
-     * Big endian byte array to uint32_t.
-     * @param[in]  buffer   Source Array.
-     * @param[in]  size     Size of source array.
-     * @param[out] value    Destination integer.
-     * @returns true if succesfully parsed. Otherwise, false.
-     */
-    bool byteArrayToUint32(const uint8_t* buffer, size_t size, uint32_t& value)
-    {
-        bool isSuccess = false;
-
-        if ((nullptr != buffer) && (sizeof(uint32_t) <= size))
-        {
-            value = ((static_cast<uint32_t>(buffer[0U]) << 24U) & 0xFF000000) |
-                    ((static_cast<uint32_t>(buffer[1U]) << 16U) & 0x00FF0000) |
-                    ((static_cast<uint32_t>(buffer[2U]) << 8U) & 0x0000FF00) |
-                    ((static_cast<uint32_t>(buffer[3U]) << 0U) & 0x000000FF);
-
-            isSuccess = true;
-        }
-
-        return isSuccess;
-    }
-
 private:
     /**
      * Array of tx Data Channels.
@@ -761,11 +712,16 @@ private:
      */
     uint8_t m_numberOfPendingChannels;
 
+    /**
+     * User data to be passed to the callbacks.
+     */
+    void* m_userData;
+
 private:
     /* Not allowed. */
-    SerialMuxProtServer();
-    SerialMuxProtServer(const SerialMuxProtServer& avg);
-    SerialMuxProtServer& operator=(const SerialMuxProtServer& avg);
+    SerialMuxProtServer();                                          /**< Default Constructor */
+    SerialMuxProtServer(const SerialMuxProtServer& avg);            /**< Copy Constructor */
+    SerialMuxProtServer& operator=(const SerialMuxProtServer& avg); /**< Assignment Operator */
 };
 
 /******************************************************************************

@@ -67,24 +67,11 @@ SOFTWARE.
 /** Max length of channel name */
 #define CHANNEL_NAME_MAX_LEN (10U)
 
-/** Available Bytes in Control Channel Payload for data. */
-#define CONTROL_CHANNEL_PAYLOAD_DATA_LENGTH (4U)
-
-/* Length of Command in Bytes */
-#define CONTROL_CHANNEL_CMD_BYTE_LENGTH (1U)
-
 /** Number of Control Channel. */
 #define CONTROL_CHANNEL_NUMBER (0U)
 
-/** DLC of Heartbeat Command. */
-#define CONTROL_CHANNEL_PAYLOAD_LENGTH                                                                                 \
-    (CHANNEL_NAME_MAX_LEN + CONTROL_CHANNEL_PAYLOAD_DATA_LENGTH + CONTROL_CHANNEL_CMD_BYTE_LENGTH)
-
-/** Index of the Command Byte of the Control Channel*/
-#define CONTROL_CHANNEL_COMMAND_INDEX (0U)
-
-/** Index of the start of the payload of the Control Channel*/
-#define CONTROL_CHANNEL_PAYLOAD_INDEX (1U)
+/** DLC of Control Channel Payload. */
+#define CONTROL_CHANNEL_PAYLOAD_LENGTH (sizeof(Command))
 
 /** Period of Heartbeat when Synced. */
 #define HEATBEAT_PERIOD_SYNCED (5000U)
@@ -102,8 +89,12 @@ SOFTWARE.
 /**
  * Channel Notification Prototype Callback.
  * Provides the received data in the respective channel to the application.
+ *
+ * @param[in] payload       Received data.
+ * @param[in] payloadSize   Size of the received data.
+ * @param[in] userData      User data provided by the application.
  */
-typedef void (*ChannelCallback)(const uint8_t* payload, const uint8_t payloadSize);
+typedef void (*ChannelCallback)(const uint8_t* payload, const uint8_t payloadSize, void* userData);
 
 /**
  * Channel Definition.
@@ -125,11 +116,13 @@ struct Channel
 /** Data container of the Frame Fields */
 typedef union _Frame
 {
+    /** Frame Fields */
     struct _Fields
     {
         /** Header */
         union _Header
         {
+            /** Header Fields Struct */
             struct _HeaderFields
             {
                 /** Channel ID */
@@ -141,12 +134,12 @@ typedef union _Frame
                 /** Frame Checksum */
                 uint8_t m_checksum;
 
-            } __attribute__((packed)) headerFields;
+            } __attribute__((packed)) headerFields; /**< Header Fields */
 
             /** Raw Header Data*/
             uint8_t rawHeader[HEADER_LEN];
 
-        } __attribute__((packed)) header;
+        } __attribute__((packed)) header; /**< Header */
 
         /** Payload */
         struct _Payload
@@ -154,14 +147,14 @@ typedef union _Frame
             /** Data of the Frame */
             uint8_t m_data[MAX_DATA_LEN];
 
-        } __attribute__((packed)) payload;
+        } __attribute__((packed)) payload; /**< Payload */
 
-    } __attribute__((packed)) fields;
+    } __attribute__((packed)) fields; /**< Frame Fields */
 
     /** Raw Frame Data */
     uint8_t raw[MAX_FRAME_LEN] = {0U};
 
-} __attribute__((packed)) Frame;
+} __attribute__((packed)) Frame; /**< Frame */
 
 /**
  * Enumeration of Commands of Control Channel.
@@ -173,6 +166,17 @@ enum COMMANDS : uint8_t
     SCRB,        /**< Subscribe Command */
     SCRB_RSP,    /**< Subscribe Response */
 };
+
+/**
+ * Command Channel Payload Structure.
+ */
+typedef struct _Command
+{
+    uint8_t  commandByte;                       /**< Command Byte */
+    uint32_t timestamp;                         /**< Timestamp */
+    uint8_t  channelNumber;                     /**< Channel Number */
+    char     channelName[CHANNEL_NAME_MAX_LEN]; /**< Channel Name */
+} __attribute__((packed)) Command;              /**< Command */
 
 #endif /* SERIALMUXPROT_COMMON_H_ */
 /** @} */

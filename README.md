@@ -1,19 +1,37 @@
 # Serial Multiplexer Protocol (SerialMuxProt)
 
-The SerialMuxProt is being developed for the communication between the Zumo Robot and a client application.
+Communication Protocol based on Streams. Uses Multiplexing to differentiate data channels.
+It is originally being developed for the communication between the [RadonUlzer](https://github.com/BlueAndi/RadonUlzer) and the [DroidControlShip](https://github.com/BlueAndi/DroidControlShip) projects.
 
 ## Table of Contents
 
+- [Installation](#installation)
 - [Network Architecture](#network-architecture)
 - [Frame](#frame)
 - [Control Channel](#control-channel-channel-0)
-  - [SYNC](#sync-d0--0x00)
-  - [SYNC_RSP](#sync_rsp-d0--0x01)
-  - [SCRB](#scrb-d0--0x02)
-  - [SCRB_RSP](#scrb_rsp-d0--0x03)
+  - [SYNC](#sync)
+  - [SYNC_RSP](#sync)
+  - [SCRB](#scrb)
+  - [SCRB_RSP](#scrb)
 - [Internal Architecture](#internal-architecture)
+- [SerialMuxChannels](#serialmuxchannels)
 
 ---
+
+## Installation
+
+- Using PlatformIO CLI:
+
+```bash
+pio pkg install --library "gabryelreyes/SerialMuxProt@^2.0.0"
+```
+
+- Adding library to `lib_deps` manually:
+
+```ini
+lib_deps =
+    gabryelreyes/SerialMuxProt@^2.0.0
+```
 
 ## Network Architecture
 
@@ -30,11 +48,13 @@ The Protocol sends and received Frames of the following form:
 /** Data container of the Frame Fields */
 typedef union _Frame
 {
+    /** Frame Fields */
     struct _Fields
     {
         /** Header */
         union _Header
         {
+            /** Header Fields Struct */
             struct _HeaderFields
             {
                 /** Channel ID */
@@ -46,12 +66,12 @@ typedef union _Frame
                 /** Frame Checksum */
                 uint8_t m_checksum;
 
-            } __attribute__((packed)) headerFields;
+            } __attribute__((packed)) headerFields; /**< Header Fields */
 
             /** Raw Header Data*/
             uint8_t rawHeader[HEADER_LEN];
 
-        } __attribute__((packed)) header;
+        } __attribute__((packed)) header; /**< Header */
 
         /** Payload */
         struct _Payload
@@ -59,14 +79,14 @@ typedef union _Frame
             /** Data of the Frame */
             uint8_t m_data[MAX_DATA_LEN];
 
-        } __attribute__((packed)) payload;
+        } __attribute__((packed)) payload; /**< Payload */
 
-    } __attribute__((packed)) fields;
+    } __attribute__((packed)) fields; /**< Frame Fields */
 
     /** Raw Frame Data */
     uint8_t raw[MAX_FRAME_LEN] = {0U};
 
-} __attribute__((packed)) Frame;
+} __attribute__((packed)) Frame; /**< Frame */
 ```
 
 ### Header
@@ -104,27 +124,31 @@ typedef union _Frame
 - D0 (Data Byte 0) is used as a Command Byte. Defines the command that is being sent.
 - Even-number *Commands* in D0 are used as Commands, while uneven-number *Commands* are used as the response to the immediately previous (n-1) command.
 
-### SYNC (D0 = 0x00)
+### SYNC
 
+- D0 = 0x00
 - Server sends SYNC Command with current timestamp.
-- Client responds with [SYNC_RSP](#sync_rsp-d0--0x01).
+- Client responds with [SYNC_RSP](#sync).
 - Server can calculate Round-Trip-Time.
 - SYNC Package must be sent periodically depending on current [State](#state-machine). The period is also used as a timeout for the previous SYNC.
 - Used as a "Heartbeat" or "keep-alive" by the client.
 
-### SYNC_RSP (D0 = 0x01)
+### SYNC_RSP
 
-- Client Response to [SYNC](#sync-d0--0x00).
+- D0 = 0x01
+- Client Response to [SYNC](#sync).
 - Data Payload is the same timestamp as in SYNC Command.
 
-### SCRB (D0 = 0x02)
+### SCRB
 
+- D0 = 0x02
 - Client sends the name of the channel it wants to suscribe to.
 - Server responds with the number and the name of the requested channel, if it is found and valid. If the channel is not found, the response has channel number = 0.
 
-### SCRB_RSP (D0 = 0x03)
+### SCRB_RSP
 
-- Server Response to [SCRB](#scrb-d0--0x02).
+- D0 = 0x03
+- Server Response to [SCRB](#scrb).
 - Channel Number on Data Byte 1 (D1).
 - Channel Name on the following bytes
 
@@ -200,3 +224,12 @@ typedef void (*ChannelCallback)(const uint8_t* payload, const uint8_t payloadSiz
 
 - Client is connected and responds to SYNC Commands.
 - SYNC Period set to 5 seconds.
+
+---
+
+## SerialMuxChannels
+
+The `SerialMuxChannels.h` file should be used to define the structures and channel information to be shared between two instances of the SerialMuxServer.
+This file defines the Channel Names, DLCs, and the data structures of the payloads.
+It is important to note that the structs must include the `packed` attribute in order to ensure the access to the data correctly.
+A sample file can be found in [here](examples/SerialMuxChannels.h).
