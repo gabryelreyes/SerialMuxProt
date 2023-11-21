@@ -550,7 +550,6 @@ class SerialMuxProt:
         if self.__sync_data.last_sync_command == rcvd_timestamp:
             self.__sync_data.last_sync_response = self.__sync_data.last_sync_command
             self.__sync_data.is_synced = True
-            print("Synced!")
 
             # Process pending Subscriptions
             self.__process_subscriptions()
@@ -597,8 +596,6 @@ class SerialMuxProt:
         # Parse payload
         channel_number = payload[4]
         channel_name = str(payload[5:], "ascii").strip('\x00')
-        print(channel_number)
-        print(channel_name)
 
         if (self.__max_configured_channels >= channel_number) and \
            (0 < self.__channels.number_of_pending_channels):
