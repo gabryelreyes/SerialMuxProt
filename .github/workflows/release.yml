@@ -57,4 +57,4 @@ jobs:
         run: |
           TAG=$(git describe --exact-match --tags)
           curl -LO $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/$TAG/SerialMuxProt-$TAG.zip
-          pio package publish SerialMuxProt-$TAG.zip --non-interactive
+          platformio package publish --type library SerialMuxProt-$TAG.zip --non-interactive
