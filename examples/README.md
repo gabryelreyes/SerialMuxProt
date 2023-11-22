@@ -5,8 +5,8 @@ The following example is written for testing the SerialMuxProt with two microcon
 ## Installation
 
 - Install the library, depending on your IDE.
-- Compile `main.cpp` from SideA and flash it onto the first board.
-- Compile `main.cpp` from SideB and flash it onto the second board.
+- Compile `main.cpp` from ServerA and flash it onto the first board.
+- Compile `main.cpp` from ServerB and flash it onto the second board.
 - Connect the UART peripherals of both boards with each other:
     - Rx from Board 1 with Tx from Board 2
     - Tx from Board 1 with Rx from Board 2

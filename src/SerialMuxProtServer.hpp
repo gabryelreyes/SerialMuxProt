@@ -268,10 +268,12 @@ private:
      */
     void cmdSYNC(const uint32_t rcvTimestamp)
     {
-        Command output = {.commandByte = COMMANDS::SYNC_RSP, .timestamp = rcvTimestamp};
+        ControlChannelPayload output;
+        output.commandByte = COMMANDS::SYNC_RSP;
+        output.timestamp   = rcvTimestamp;
 
         /* Ignore return as SYNC_RSP can fail */
-        (void)send(CONTROL_CHANNEL_NUMBER, &output, sizeof(Command));
+        (void)send(CONTROL_CHANNEL_NUMBER, &output, sizeof(ControlChannelPayload));
     }
 
     /**
@@ -301,7 +303,9 @@ private:
      */
     void cmdSCRB(const char* channelName)
     {
-        Command output = {.commandByte = COMMANDS::SCRB_RSP, .channelNumber = getTxChannelNumber(channelName)};
+        ControlChannelPayload output;
+        output.commandByte   = COMMANDS::SCRB_RSP;
+        output.channelNumber = getTxChannelNumber(channelName);
 
         /* Using strnlen in case the name is not null-terminated. */
         uint8_t nameLength = strnlen(channelName, CHANNEL_NAME_MAX_LEN);
@@ -309,7 +313,7 @@ private:
         /* Name is always sent back. */
         memcpy(output.channelName, channelName, nameLength);
 
-        if (false == send(CONTROL_CHANNEL_NUMBER, &output, sizeof(Command)))
+        if (false == send(CONTROL_CHANNEL_NUMBER, &output, sizeof(ControlChannelPayload)))
         {
             /* Fall out of sync if failed to send. */
             m_isSynced = false;
@@ -367,7 +371,7 @@ private:
     {
         if ((nullptr != payload) && (CONTROL_CHANNEL_PAYLOAD_LENGTH == payloadSize))
         {
-            const Command* parsedPayload = reinterpret_cast<const Command*>(payload);
+            const ControlChannelPayload* parsedPayload = reinterpret_cast<const ControlChannelPayload*>(payload);
 
             switch (parsedPayload->commandByte)
             {
@@ -514,9 +518,11 @@ private:
             }
 
             /* Send SYNC Command. */
-            Command payload = {.commandByte = COMMANDS::SYNC, .timestamp = currentTimestamp};
+            ControlChannelPayload payload;
+            payload.commandByte = COMMANDS::SYNC;
+            payload.timestamp   = currentTimestamp;
 
-            if (true == send(CONTROL_CHANNEL_NUMBER, &payload, sizeof(Command)))
+            if (true == send(CONTROL_CHANNEL_NUMBER, &payload, sizeof(ControlChannelPayload)))
             {
                 m_lastSyncCommand = currentTimestamp;
             }
@@ -537,10 +543,11 @@ private:
                     /* Suscribe to channel. */
                     /* Using strnlen in case the name is not null-terminated. */
                     uint8_t nameLength = strnlen(m_pendingSuscribeChannels[idx].m_name, CHANNEL_NAME_MAX_LEN);
-                    Command output     = {.commandByte = COMMANDS::SCRB};
+                    ControlChannelPayload output;
+                    output.commandByte = COMMANDS::SCRB;
                     memcpy(output.channelName, m_pendingSuscribeChannels[idx].m_name, nameLength);
 
-                    if (false == send(CONTROL_CHANNEL_NUMBER, &output, sizeof(Command)))
+                    if (false == send(CONTROL_CHANNEL_NUMBER, &output, sizeof(ControlChannelPayload)))
                     {
                         /* Out-of-Sync on failed send. */
                         m_isSynced = false;
