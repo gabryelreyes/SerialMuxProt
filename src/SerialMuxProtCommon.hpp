@@ -71,7 +71,7 @@ SOFTWARE.
 #define CONTROL_CHANNEL_NUMBER (0U)
 
 /** DLC of Control Channel Payload. */
-#define CONTROL_CHANNEL_PAYLOAD_LENGTH (sizeof(Command))
+#define CONTROL_CHANNEL_PAYLOAD_LENGTH (sizeof(ControlChannelPayload))
 
 /** Period of Heartbeat when Synced. */
 #define HEATBEAT_PERIOD_SYNCED (5000U)
@@ -168,15 +168,15 @@ enum COMMANDS : uint8_t
 };
 
 /**
- * Command Channel Payload Structure.
+ * Control Channel Payload Structure.
  */
-typedef struct _Command
+typedef struct _ControlChannelPayload
 {
-    uint8_t  commandByte;                       /**< Command Byte */
-    uint32_t timestamp;                         /**< Timestamp */
-    uint8_t  channelNumber;                     /**< Channel Number */
-    char     channelName[CHANNEL_NAME_MAX_LEN]; /**< Channel Name */
-} __attribute__((packed)) Command;              /**< Command */
+    uint8_t  commandByte;                        /**< Command Byte */
+    uint32_t timestamp;                          /**< Timestamp */
+    uint8_t  channelNumber;                      /**< Channel Number */
+    char     channelName[CHANNEL_NAME_MAX_LEN];  /**< Channel Name */
+} __attribute__((packed)) ControlChannelPayload; /**< ControlChannelPayload */
 
 #endif /* SERIALMUXPROT_COMMON_H_ */
 /** @} */
