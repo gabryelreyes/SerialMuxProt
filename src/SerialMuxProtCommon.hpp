@@ -172,11 +172,11 @@ enum COMMANDS : uint8_t
  */
 typedef struct _ControlChannelPayload
 {
-    uint8_t  commandByte;                        /**< Command Byte */
-    uint32_t timestamp;                          /**< Timestamp */
-    uint8_t  channelNumber;                      /**< Channel Number */
-    char     channelName[CHANNEL_NAME_MAX_LEN];  /**< Channel Name */
-} __attribute__((packed)) ControlChannelPayload; /**< ControlChannelPayload */
+    uint8_t  commandByte                       = 0U;   /**< Command Byte */
+    uint32_t timestamp                         = 0U;   /**< Timestamp */
+    uint8_t  channelNumber                     = 0U;   /**< Channel Number */
+    char     channelName[CHANNEL_NAME_MAX_LEN] = {0U}; /**< Channel Name */
+} __attribute__((packed)) ControlChannelPayload;       /**< ControlChannelPayload */
 
 #endif /* SERIALMUXPROT_COMMON_H_ */
 /** @} */
