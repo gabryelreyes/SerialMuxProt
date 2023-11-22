@@ -60,7 +60,7 @@ typedef union _Frame
                 /** Channel ID */
                 uint8_t m_channel;
 
-                /** Channel ID */
+                /** Channel DLC */
                 uint8_t m_dlc;
 
                 /** Frame Checksum */
@@ -100,15 +100,13 @@ typedef union _Frame
 - The Application can publish or subscribe to any of these channels using the channel's name.
 - Client suscribes to a channel using [Channel 0](#control-channel-channel-0).
 
-#### DLC Field
+#### Data Length Code (DLC) Field
 
 - Contains the size of the payload contained by the frame.
 
 #### Checksum Field
 
-- Simple Checksum.
-- Applied to previous fields.
-- checksum = sum(Channel + Data Bytes) % UINT8_MAX
+- checksum = sum(Channel + DLC + Data Bytes) % UINT8_MAX
 
 ### Payload Field
 
