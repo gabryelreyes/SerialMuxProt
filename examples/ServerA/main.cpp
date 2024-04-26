@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright (c) 2023 Gabryel Reyes <gabryelrdiaz@gmail.com>
+ * Copyright (c) 2023 - 2024 Gabryel Reyes <gabryelrdiaz@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -57,6 +57,8 @@
  * Prototypes
  *****************************************************************************/
 
+static void gOnSyncedCallback(void* userData);
+
 /******************************************************************************
  * Local Variables
  *****************************************************************************/
@@ -90,6 +92,8 @@ uint32_t gLastLedSendTimestamp = 0U;
  */
 void setup()
 {
+    bool syncedCallbackRegistered = false;
+
     /* Initialize Serial */
     Serial.begin(SERIAL_BAUDRATE);
 
@@ -98,6 +102,19 @@ void setup()
 
     /* Create Channel for sending LED data. */
     gSerialMuxProtChannelIdLedData = gSmpServer.createChannel(LED_CHANNEL_NAME, LED_CHANNEL_DLC);
+
+    /* Register Synced Callback. */
+    syncedCallbackRegistered = gSmpServer.registerOnSyncedCallback(gOnSyncedCallback);
+
+    /* Check channel creation and callback register. */
+    if ((0U == gSerialMuxProtChannelIdLedData) || (false == syncedCallbackRegistered))
+    {
+        /* Something went wrong. */
+        while (true)
+        {
+            /* Do nothing. */
+        }
+    }
 }
 
 /**
@@ -144,3 +161,14 @@ void loop()
 /******************************************************************************
  * Local Functions
  *****************************************************************************/
+
+/**
+ * Callback function for Synced event.
+ *
+ * @param userData User data passed to the callback.
+ */
+static void gOnSyncedCallback(void* userData)
+{
+    /* Print Synced message. */
+    Serial.println("Synced");
+}

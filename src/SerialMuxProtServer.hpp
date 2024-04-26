@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright (c) 2023 Gabryel Reyes <gabryelrdiaz@gmail.com>
+ * Copyright (c) 2023 - 2024 Gabryel Reyes <gabryelrdiaz@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -91,7 +91,9 @@ public:
         m_numberOfTxChannels(0U),
         m_numberOfRxChannels(0U),
         m_numberOfPendingChannels(0U),
-        m_userData(userData)
+        m_userData(userData),
+        m_onSynced(nullptr),
+        m_onDeSynced(nullptr)
     {
     }
 
@@ -261,6 +263,48 @@ public:
         return m_numberOfRxChannels;
     }
 
+    /**
+     * Register a callback for the On-Synced event.
+     * The callback will be called when the client is synced to the server.
+     *
+     * @param[in] callback Callback to be registered.
+     *
+     * @returns true if the callback was registered, false otherwise.
+     */
+    bool registerOnSyncedCallback(EventCallback callback)
+    {
+        bool registered = false;
+
+        if (nullptr != callback)
+        {
+            m_onSynced = callback;
+            registered = true;
+        }
+
+        return registered;
+    }
+
+    /**
+     * Register a callback for the On-DeSynced event.
+     * The callback will be called when the client is desynced from the server.
+     *
+     * @param[in] callback Callback to be registered.
+     *
+     * @returns true if the callback was registered, false otherwise.
+     */
+    bool registerOnDeSyncedCallback(EventCallback callback)
+    {
+        bool registered = false;
+
+        if (nullptr != callback)
+        {
+            m_onDeSynced = callback;
+            registered   = true;
+        }
+
+        return registered;
+    }
+
 private:
     /**
      * Control Channel Command: SYNC
@@ -286,14 +330,14 @@ private:
         if (rcvTimestamp == m_lastSyncCommand)
         {
             m_lastSyncResponse = m_lastSyncCommand;
-            m_isSynced         = true;
+            setSyncedState(true);
 
             /* Manage Pending Subscriptions. */
             managePendingSubscriptions();
         }
         else
         {
-            m_isSynced = false;
+            setSyncedState(false);
         }
     }
 
@@ -316,7 +360,7 @@ private:
         if (false == send(CONTROL_CHANNEL_NUMBER, &output, sizeof(ControlChannelPayload)))
         {
             /* Fall out of sync if failed to send. */
-            m_isSynced = false;
+            setSyncedState(false);
         }
     }
 
@@ -514,7 +558,7 @@ private:
             /* Timeout. */
             if (m_lastSyncCommand != m_lastSyncResponse)
             {
-                m_isSynced = false;
+                setSyncedState(false);
             }
 
             /* Send SYNC Command. */
@@ -550,7 +594,7 @@ private:
                     if (false == send(CONTROL_CHANNEL_NUMBER, &output, sizeof(ControlChannelPayload)))
                     {
                         /* Out-of-Sync on failed send. */
-                        m_isSynced = false;
+                        setSyncedState(false);
                         break;
                     }
                 }
@@ -649,6 +693,33 @@ private:
         return (sum % UINT8_MAX);
     }
 
+    /**
+     * Change the current sync state.
+     *
+     * @param[in] isSynced New sync state.
+     */
+    void setSyncedState(bool isSynced)
+    {
+        /* Set new synced state. */
+        m_isSynced = isSynced;
+
+        /* Notify the user is callback is registered. */
+        if (true == m_isSynced)
+        {
+            if (nullptr != m_onSynced)
+            {
+                m_onSynced(m_userData);
+            }
+        }
+        else
+        {
+            if (nullptr != m_onDeSynced)
+            {
+                m_onDeSynced(m_userData);
+            }
+        }
+    }
+
 private:
     /**
      * Array of tx Data Channels.
@@ -723,6 +794,16 @@ private:
      * User data to be passed to the callbacks.
      */
     void* m_userData;
+
+    /**
+     * On-synced callback.
+     */
+    EventCallback m_onSynced;
+
+    /**
+     * On-desynced callback.
+     */
+    EventCallback m_onDeSynced;
 
 private:
     /* Not allowed. */

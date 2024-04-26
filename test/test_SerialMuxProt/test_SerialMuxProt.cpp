@@ -1,6 +1,6 @@
 /* MIT License
  *
- * Copyright (c) 2023 Andreas Merkle <web@blue-andi.de>
+ * Copyright (c) 2023 - 2024 Gabryel Reyes <gabryelrdiaz@gmail.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,23 +21,22 @@
  * SOFTWARE.
  */
 
+/*******************************************************************************
+    DESCRIPTION
+*******************************************************************************/
 /**
  * @author  Gabryel Reyes <gabryelrdiaz@gmail.com>
  * @brief   This module contains the SerialMuxProt Server tests.
  */
 
 /******************************************************************************
- * Compile Switches
- *****************************************************************************/
-
-/******************************************************************************
  * Includes
  *****************************************************************************/
-
 #include <unity.h>
 #include <TestStream.h>
 #include <SerialMuxProtServer.hpp>
 #include <stdio.h>
+
 /******************************************************************************
  * Compiler Switches
  *****************************************************************************/
@@ -63,6 +62,7 @@ static void testCmdScrb();
 static void testCmdScrbRsp();
 static void testChannelCreation();
 static void testDataSend();
+static void testEventCallbacks();
 
 /******************************************************************************
  * Local Variables
@@ -128,6 +128,7 @@ static void loop()
     RUN_TEST(testCmdScrbRsp);
     RUN_TEST(testChannelCreation);
     RUN_TEST(testDataSend);
+    RUN_TEST(testEventCallbacks);
 
     UNITY_END();
 
@@ -552,4 +553,39 @@ static void testDataSend()
      */
     testSerialMuxProtServer.sendData("TEST", testPayload, sizeof(testPayload));
     TEST_ASSERT_EQUAL_UINT8_ARRAY(expectedOutputBufferVector[0U], gTestStream.m_outputBuffer, sizeof(testPayload));
+}
+
+/**
+ * Test Event Callbacks on SerialMuxProt Server.
+ */
+static void testEventCallbacks()
+{
+    SerialMuxProtServer<1U> testSerialMuxProtServer(gTestStream);
+    uint8_t expectedOutputBufferVector[1U][MAX_FRAME_LEN] = {{0x01, 0x04, 0x1A, 0x12, 0x34, 0x56, 0x78}};
+    uint8_t inputQueueVector[1U][MAX_FRAME_LEN]           = {{0x00, 0x10, 0x11, 0x01, 0x00, 0x00, 0x00, 0x00}};
+
+    /* Register callbacks. */
+    callbackCalled = false;
+
+    TEST_ASSERT_TRUE(testSerialMuxProtServer.registerOnSyncedCallback([](void* userData) { callbackCalled = true; }));
+    TEST_ASSERT_TRUE(testSerialMuxProtServer.registerOnDeSyncedCallback([](void* userData) { callbackCalled = true; }));
+
+    /* Flush Stream */
+    gTestStream.flushInputBuffer();
+    gTestStream.flushOutputBuffer();
+
+    /* Sync */
+    gTestStream.pushToQueue(inputQueueVector[0U], controlChannelFrameLength);
+    testSerialMuxProtServer.process(1U);
+    testSerialMuxProtServer.process(2U);
+    TEST_ASSERT_TRUE(testSerialMuxProtServer.isSynced());
+    TEST_ASSERT_TRUE(callbackCalled);
+
+    /* De-sync.*/
+    callbackCalled = false;
+    testSerialMuxProtServer.process(2000U);
+    testSerialMuxProtServer.process(7000U);
+    testSerialMuxProtServer.process(12000U);
+    TEST_ASSERT_FALSE(testSerialMuxProtServer.isSynced());
+    TEST_ASSERT_TRUE(callbackCalled);
 }

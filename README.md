@@ -202,13 +202,18 @@ struct Channel
 /**
  * Channel Notification Prototype Callback.
  * Provides the received data in the respective channel to the application.
+ *
+ * @param[in] payload       Received data.
+ * @param[in] payloadSize   Size of the received data.
+ * @param[in] userData      User data provided by the application.
  */
-typedef void (*ChannelCallback)(const uint8_t* payload, const uint8_t payloadSize);
+typedef void (*ChannelCallback)(const uint8_t* payload, const uint8_t payloadSize, void* userData);
 ```
 
 - Callback passes only a pointer to the received Buffer. Data must be copied by application.
 - Memory is freed by the protocol after the callback is done.
 - DLC is passed as payloadSize to the application.
+- The `userData` pointer specified in the constructor is passed to the application.
 
 ### State Machine
 
@@ -222,6 +227,26 @@ typedef void (*ChannelCallback)(const uint8_t* payload, const uint8_t payloadSiz
 
 - Client is connected and responds to SYNC Commands.
 - SYNC Period set to 5 seconds.
+
+### Event Callbacks
+
+It is possible to register `EventCallback` callbacks for the Synced and DeSynced events. These will be called once an event is triggered to notify the user.
+
+```cpp
+/**
+ * Event Notification Prototype Callback.
+ * Provides a notification to the application on the event it is registered to.
+ *
+ * @param[in] userData  User data provided by the application.
+ */
+typedef void (*EventCallback)(void* userData);
+
+/* Called on Sync. */
+bool registerOnSyncedCallback(EventCallback callback);
+
+/* Called on DeSync. */
+bool registerOnDeSyncedCallback(EventCallback callback);
+```
 
 ---
 
