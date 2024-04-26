@@ -97,6 +97,14 @@ SOFTWARE.
 typedef void (*ChannelCallback)(const uint8_t* payload, const uint8_t payloadSize, void* userData);
 
 /**
+ * Event Notification Prototype Callback.
+ * Provides a notification to the application on the event it is registered to.
+ *
+ * @param[in] userData  User data provided by the application.
+ */
+typedef void (*EventCallback)(void* userData);
+
+/**
  * Channel Definition.
  */
 struct Channel
