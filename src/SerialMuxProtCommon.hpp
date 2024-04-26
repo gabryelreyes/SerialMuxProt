@@ -92,7 +92,7 @@
  * @param[in] payloadSize   Size of the received data.
  * @param[in] userData      User data provided by the application.
  */
-typedef void (*ChannelCallback)(const uint8_t* payload, const uint8_t payloadSize, void* userData);
+typedef void (*ChannelCallback)(const uint8_t* payload, uint8_t payloadSize, void* userData);
 
 /**
  * Event Notification Prototype Callback.
