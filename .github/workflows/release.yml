@@ -55,6 +55,4 @@ jobs:
         env:
           PLATFORMIO_AUTH_TOKEN: ${{ secrets.PLATFORMIO_AUTH_TOKEN }}
         run: |
-          TAG=$(git describe --exact-match --tags)
-          curl -LO $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/download/$TAG/SerialMuxProt-$TAG.zip
-          platformio package publish --type library SerialMuxProt-$TAG.zip --non-interactive
+          platformio package publish --non-interactive
