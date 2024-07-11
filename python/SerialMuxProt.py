@@ -572,10 +572,10 @@ class SerialMuxProt:
 
         # Parse name
         channel_name = str(payload[5:], "ascii").strip('\x00')
-        response[1] = self.get_tx_channel_number(channel_name)
+        response[5] = self.get_tx_channel_number(channel_name)
 
         # Name is always sent back.
-        response[2:] = bytearray(channel_name, 'ascii')
+        response[6:] = bytearray(channel_name, 'ascii')
 
         # Pad array if necessary
         response = response.ljust(
