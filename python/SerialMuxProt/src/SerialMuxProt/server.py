@@ -30,7 +30,7 @@
 
 from dataclasses import dataclass
 from struct import Struct
-from socket_client import SocketClient
+from .stream import Stream
 
 ################################################################################
 # Variables
@@ -151,10 +151,10 @@ class RxData:
         self.receive_frame = Frame()
 
 
-class SerialMuxProt:
+class Server:
     """ SerialMuxProt Server """
 
-    def __init__(self, max_configured_channels: int, stream: SocketClient) -> None:
+    def __init__(self, max_configured_channels: int, stream: Stream) -> None:
         self.__max_configured_channels = max_configured_channels
         self.__stream = stream
         self.__rx_data = RxData()
@@ -167,7 +167,7 @@ class SerialMuxProt:
 
         Parameters
         ----------
-        current_timestamp : int
+        current_timestamp: int
             Time in milliseconds.
 
         """
@@ -183,9 +183,9 @@ class SerialMuxProt:
 
         Parameters:
         ----------
-        channel_name : str
+        channel_name: str
             Channel to send frame to.
-        payload : bytearray
+        payload: bytearray
             Byte buffer to be sent.
 
         Returns:
@@ -219,9 +219,9 @@ class SerialMuxProt:
 
         Parameters:
         ----------
-        name : str
+        name: str
             Name of the channel. It will not be checked if the name already exists.
-        dlc : int
+        dlc: int
             Length of the payload of this channel.
 
         Returns:
@@ -254,9 +254,9 @@ class SerialMuxProt:
 
         Parameters:
         ----------
-        name : str
+        name: str
             Name of the Channel to suscribe to.
-        callback : function
+        callback: function
             Callback to return the incoming data.
         """
 
@@ -276,7 +276,7 @@ class SerialMuxProt:
 
         Parameters:
         -----------
-        channel_name : str
+        channel_name: str
             Name of channel
 
         Returns:
@@ -298,7 +298,7 @@ class SerialMuxProt:
 
         Parameters
         ----------
-        current_timestamp : int
+        current_timestamp: int
             Time in milliseconds.
 
         """
@@ -347,7 +347,8 @@ class SerialMuxProt:
             dlc = self.__rx_data.receive_frame.dlc
 
             # DLC = 0 means that the channel does not exist.
-            if (0 != dlc) and (SerialMuxProtConstants.MAX_RX_ATTEMPTS >= self.__rx_data.rx_attempts):
+            if (0 != dlc) and \
+                    (SerialMuxProtConstants.MAX_RX_ATTEMPTS >= self.__rx_data.rx_attempts):
                 remaining_payload_bytes = self.__rx_data.received_bytes - \
                     SerialMuxProtConstants.HEADER_LEN
                 expected_bytes = dlc - remaining_payload_bytes
@@ -363,7 +364,8 @@ class SerialMuxProt:
                 self.__rx_data.received_bytes += rcvd
 
             # Frame has been received.
-            if (0 != dlc) and ((SerialMuxProtConstants.HEADER_LEN + dlc) == self.__rx_data.received_bytes):
+            if (0 != dlc) and \
+                    ((SerialMuxProtConstants.HEADER_LEN + dlc) == self.__rx_data.received_bytes):
 
                 # Check validity
                 if self.__is_frame_valid(self.__rx_data.receive_frame) is True:
@@ -371,6 +373,7 @@ class SerialMuxProt:
                     self.__rx_data.receive_frame.unpack_payload()
 
                     # Differenciate between Control and Data Channels.
+                    # pylint: disable=line-too-long
                     if SerialMuxProtConstants.CONTROL_CHANNEL_NUMBER == self.__rx_data.receive_frame.channel:
                         self.__callback_control_channel(
                             self.__rx_data.receive_frame.payload)
@@ -422,10 +425,10 @@ class SerialMuxProt:
 
         Parameters
         ----------
-        channel_number : int
+        channel_number: int
             Channel number to check.
 
-        is_tx_channel : bool
+        is_tx_channel: bool
             Is the Channel a TX Channel? If false, will return value for an RX Channel instead.
 
         Returns
@@ -448,7 +451,7 @@ class SerialMuxProt:
 
         Parameters
         ----------
-        frame : Frame
+        frame: Frame
             Frame to be checked
 
         Returns:
@@ -463,7 +466,7 @@ class SerialMuxProt:
 
         Parameters:
         ----------
-        raw_frame : Frame
+        raw_frame: Frame
             Frame to calculate checksum for
 
         Returns:
@@ -484,9 +487,9 @@ class SerialMuxProt:
 
         Parameters:
         ----------
-        channel_number : int
+        channel_number: int
             Channel to send frame to.
-        payload : bytearray
+        payload: bytearray
             Payload to send
 
         Returns:
@@ -524,13 +527,14 @@ class SerialMuxProt:
 
         Parameters:
         -----------
-        payload : bytearray
+        payload: bytearray
             Command Data of received frame
         """
 
         response = bytearray(
             SerialMuxProtConstants.CONTROL_CHANNEL_PAYLOAD_LENGTH)
-        response[SerialMuxProtConstants.CONTROL_CHANNEL_COMMAND_INDEX] = SerialMuxProtConstants.Commands.SYNC_RSP
+        response[SerialMuxProtConstants.CONTROL_CHANNEL_COMMAND_INDEX] =\
+            SerialMuxProtConstants.Commands.SYNC_RSP
         response[SerialMuxProtConstants.CONTROL_CHANNEL_PAYLOAD_INDEX:] = payload
 
         self.__send(SerialMuxProtConstants.CONTROL_CHANNEL_NUMBER, response)
@@ -540,7 +544,7 @@ class SerialMuxProt:
 
         Parameters:
         -----------
-        payload : bytearray
+        payload: bytearray
             Command Data of received frame
         """
 
@@ -562,13 +566,14 @@ class SerialMuxProt:
 
         Parameters:
         -----------
-        payload : bytearray
+        payload: bytearray
             Command Data of received frame
         """
 
         response = bytearray(
             SerialMuxProtConstants.CONTROL_CHANNEL_PAYLOAD_LENGTH)
-        response[SerialMuxProtConstants.CONTROL_CHANNEL_COMMAND_INDEX] = SerialMuxProtConstants.Commands.SCRB_RSP
+        response[SerialMuxProtConstants.CONTROL_CHANNEL_COMMAND_INDEX] = \
+            SerialMuxProtConstants.Commands.SCRB_RSP
 
         # Parse name
         channel_name = str(payload[5:], "ascii").strip('\x00')
@@ -590,7 +595,7 @@ class SerialMuxProt:
 
         Parameters:
         -----------
-        payload : bytearray
+        payload: bytearray
             Command Data of received frame
         """
 
@@ -630,7 +635,7 @@ class SerialMuxProt:
 
         Parameters:
         -----------
-        payload : bytearray
+        payload: bytearray
             Payload of received frame
         """
         if len(payload) != SerialMuxProtConstants.CONTROL_CHANNEL_PAYLOAD_LENGTH:

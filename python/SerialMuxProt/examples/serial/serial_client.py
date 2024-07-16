@@ -29,6 +29,7 @@
 ################################################################################
 
 import serial
+from SerialMuxProt import Stream
 
 ################################################################################
 # Variables
@@ -39,7 +40,7 @@ import serial
 ################################################################################
 
 
-class SerialClient:
+class SerialClient(Stream):
     """
     Class for Serial Communication
     """
@@ -77,7 +78,7 @@ class SerialClient:
 
         self.__serial.close()
 
-    def write(self, payload : bytearray) -> int:
+    def write(self, payload: bytearray) -> int:
         """ Sends Data to the Server.
 
         Parameters

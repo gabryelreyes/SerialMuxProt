@@ -1,4 +1,4 @@
-""" Main programm entry point"""
+""" Stream interface for SerialMuxProt. """
 
 # MIT License
 #
@@ -28,70 +28,66 @@
 # Imports
 ################################################################################
 
-import sys
-import time
-from serial_client import SerialClient
-from SerialMuxProt import Server
+from abc import ABC, abstractmethod
 
 ################################################################################
 # Variables
 ################################################################################
 
-g_socket = SerialClient("COM3", 115200)
-smp_server = Server(10, g_socket)
-START_TIME = round(time.time()*1000)
-
 ################################################################################
 # Classes
 ################################################################################
+
+
+class Stream(ABC):
+    """
+    Stream Interface for SerialMuxProt.
+    """
+
+    @abstractmethod
+    def available(self) -> int:
+        """ Get the number of bytes available in the stream.
+
+        Returns:
+        --------
+        Number of bytes available in the stream.
+        """
+
+    @abstractmethod
+    def read_bytes(self, length: int) -> tuple[int, bytearray]:
+        """ Read a number of bytes from the stream.
+
+        Parameters:
+        -----------
+        length : int
+            Number of bytes to read.
+
+        Returns
+        ----------
+        Tuple:
+        - int: Number of bytes received.
+        - bytearray: Received data.
+        """
+
+    @abstractmethod
+    def write(self, payload: bytearray) -> int:
+        """
+        Write a bytearray to the stream.
+
+        Parameters:
+        -----------
+        payload: bytearray
+            Data to write to the stream.
+
+        Returns:
+        --------
+        Number of bytes written.
+        """
 
 ################################################################################
 # Functions
 ################################################################################
 
-
-def get_milliseconds() -> int:
-    """ Get current system milliseconds """
-    return round(time.time()*1000)
-
-
-def millis() -> int:
-    """ Get current program milliseconds """
-    current_time = get_milliseconds()
-    return current_time - START_TIME
-
-
-def callback_timestamp(payload: bytearray) -> None:
-    """ Callback of TIMESTAMP Channel """
-
-    print(payload.hex())
-
-
-def main():
-    """The program entry point function.adadadadada
-    Returns:
-        int: System exit status
-    """
-    print("Starting System.")
-    last_time = 0
-
-    try:
-        g_socket.connect_to_server()
-    except Exception as err:  # pylint: disable=broad-exception-caught
-        print(err)
-        return
-
-    smp_server.subscribe_to_channel("LED", callback_timestamp)
-
-    while True:
-        if (millis() - last_time) >= 5:
-            last_time = millis()
-            smp_server.process(millis())
-
 ################################################################################
 # Main
 ################################################################################
-
-
-if __name__ == "__main__":
-    sys.exit(main())
