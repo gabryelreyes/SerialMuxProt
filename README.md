@@ -33,6 +33,19 @@ lib_deps =
     gabryelreyes/SerialMuxProt@^2.0.0
 ```
 
+### Python Installation
+
+- Navigate to the root of the Python library:
+
+```bash
+cd python/SerialMuxProt
+```
+- Install the package using `pip`:
+
+```bash
+pip install .
+```
+
 ## Network Architecture
 
 - Server-Client Architecture

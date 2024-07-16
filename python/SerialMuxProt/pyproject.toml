@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm", "wheel", "toml"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "SerialMuxProt"
+version = "2.2.1"
+description = "Communication Protocol based on Streams. Uses Multiplexing to differentiate data channels."
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    { name = "gabryelreyes", email = "gabryelrdiaz@gmail.com" }
+]
+license = {text = "BSD 3-Clause"}
+classifiers = [
+    "License :: OSI Approved :: BSD 3-Clause",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11"
+]
+
+dependencies = [
+    "toml>=0.10.2"
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest > 5.0.0",
+  "pytest-cov[all]"
+]
+
+[project.urls]
+documentation = "https://github.com/gabryelreyes/SerialMuxProt"
+repository = "https://github.com/gabryelreyes/SerialMuxProt"
+tracker = "https://github.com/gabryelreyes/SerialMuxProt"
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "src"
+]
