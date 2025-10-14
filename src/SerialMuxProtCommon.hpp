@@ -44,6 +44,21 @@
  * Macros
  *****************************************************************************/
 
+/** Packing macro for GNU Compiler. */
+#ifdef __GNUC__
+#define PACK(__Declaration__) __Declaration__ __attribute__((__packed__))
+#endif
+
+/** Packing macro for MSVC Compiler. */
+#ifdef _MSC_VER
+#define PACK(__Declaration__) __pragma(pack(push, 1)) __Declaration__ __pragma(pack(pop))
+#endif
+
+/** Check for pack macro being defined. */
+#ifndef PACK
+#error "Please define the PACK macro for your compiler."
+#endif
+
 /** Channel Field Length in Bytes */
 #define CHANNEL_LEN (1U)
 
@@ -120,17 +135,13 @@ struct Channel
 };
 
 /** Data container of the Frame Fields */
-typedef union _Frame
-{
+PACK(typedef union _Frame {
     /** Frame Fields */
-    struct _Fields
-    {
+    PACK(struct _Fields {
         /** Header */
-        union _Header
-        {
+        PACK(union _Header {
             /** Header Fields Struct */
-            struct _HeaderFields
-            {
+            PACK(struct _HeaderFields {
                 /** Channel ID */
                 uint8_t m_channel;
 
@@ -139,28 +150,27 @@ typedef union _Frame
 
                 /** Frame Checksum */
                 uint8_t m_checksum;
-
-            } __attribute__((packed)) headerFields; /**< Header Fields */
+            })
+            headerFields; /**< Header Fields */
 
             /** Raw Header Data*/
             uint8_t rawHeader[HEADER_LEN];
-
-        } __attribute__((packed)) header; /**< Header */
+        })
+        header; /**< Header */
 
         /** Payload */
-        struct _Payload
-        {
+        PACK(struct _Payload {
             /** Data of the Frame */
             uint8_t m_data[MAX_DATA_LEN];
-
-        } __attribute__((packed)) payload; /**< Payload */
-
-    } __attribute__((packed)) fields; /**< Frame Fields */
+        })
+        payload; /**< Payload */
+    })
+    fields; /**< Frame Fields */
 
     /** Raw Frame Data */
     uint8_t raw[MAX_FRAME_LEN] = {0U};
-
-} __attribute__((packed)) Frame; /**< Frame */
+})
+Frame; /**< Frame */
 
 /**
  * Enumeration of Commands of Control Channel.
@@ -176,13 +186,13 @@ enum COMMANDS : uint8_t
 /**
  * Control Channel Payload Structure.
  */
-typedef struct _ControlChannelPayload
-{
+PACK(typedef struct _ControlChannelPayload {
     uint8_t  commandByte                       = 0U;   /**< Command Byte */
     uint32_t timestamp                         = 0U;   /**< Timestamp */
     uint8_t  channelNumber                     = 0U;   /**< Channel Number */
     char     channelName[CHANNEL_NAME_MAX_LEN] = {0U}; /**< Channel Name */
-} __attribute__((packed)) ControlChannelPayload;       /**< ControlChannelPayload */
+})
+ControlChannelPayload; /**< ControlChannelPayload */
 
 #endif /* SERIALMUXPROT_COMMON_H_ */
 /** @} */
