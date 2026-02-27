@@ -189,7 +189,7 @@ public:
     {
         size_t count = 0;
 
-        while ((!m_rcvQueue.empty()) && (count <= length))
+        while ((!m_rcvQueue.empty()) && (count < length))
         {
             buffer[count] = m_rcvQueue.front();
             m_rcvQueue.pop();
