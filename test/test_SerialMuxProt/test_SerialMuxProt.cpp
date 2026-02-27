@@ -164,7 +164,7 @@ extern void tearDown(void)
 
 /**
  * Callback for incoming data from test channel.
- * @param[in] payload Byte buffer containing incomming data.
+ * @param[in] payload Byte buffer containing incoming data.
  * @param[in] payloadSize Number of bytes received.
  * @param[in] userData      User data provided by the application.
  */
