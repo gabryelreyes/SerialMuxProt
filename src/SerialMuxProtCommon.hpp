@@ -186,5 +186,8 @@ typedef struct _ControlChannelPayload
     char     channelName[CHANNEL_NAME_MAX_LEN] = {0U}; /**< Channel Name */
 } __attribute__((packed)) ControlChannelPayload;       /**< ControlChannelPayload */
 
+static_assert(MAX_DATA_LEN >= sizeof(ControlChannelPayload),
+              "MAX_DATA_LEN must be >= sizeof(ControlChannelPayload) to avoid buffer overflows on control channel.");
+
 #endif /* SERIALMUXPROT_COMMON_H_ */
 /** @} */
