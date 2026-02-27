@@ -56,8 +56,10 @@
 /** Length of Complete Header Field */
 #define HEADER_LEN (CHANNEL_LEN + DLC_LEN + CHECKSUM_LEN)
 
+#ifndef MAX_DATA_LEN
 /** Data Field Length in Bytes */
 #define MAX_DATA_LEN (32U)
+#endif /* MAX_DATA_LEN */
 
 /** Total Frame Length in Bytes */
 #define MAX_FRAME_LEN (HEADER_LEN + MAX_DATA_LEN)
