@@ -55,7 +55,7 @@
 
 static void setup();
 static void loop();
-static void testChannelCallback(const uint8_t* payload, uint8_t payloadSize);
+static void testChannelCallback(const uint8_t* payload, uint8_t payloadSize, void* userData);
 static void testCmdSync();
 static void testCmdSyncRsp();
 static void testCmdScrb();
@@ -164,7 +164,7 @@ extern void tearDown(void)
 
 /**
  * Callback for incoming data from test channel.
- * @param[in] payload Byte buffer containing incomming data.
+ * @param[in] payload Byte buffer containing incoming data.
  * @param[in] payloadSize Number of bytes received.
  * @param[in] userData      User data provided by the application.
  */

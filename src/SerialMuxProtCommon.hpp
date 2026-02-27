@@ -56,8 +56,10 @@
 /** Length of Complete Header Field */
 #define HEADER_LEN (CHANNEL_LEN + DLC_LEN + CHECKSUM_LEN)
 
+#ifndef MAX_DATA_LEN
 /** Data Field Length in Bytes */
 #define MAX_DATA_LEN (32U)
+#endif /* MAX_DATA_LEN */
 
 /** Total Frame Length in Bytes */
 #define MAX_FRAME_LEN (HEADER_LEN + MAX_DATA_LEN)
@@ -183,6 +185,9 @@ typedef struct _ControlChannelPayload
     uint8_t  channelNumber                     = 0U;   /**< Channel Number */
     char     channelName[CHANNEL_NAME_MAX_LEN] = {0U}; /**< Channel Name */
 } __attribute__((packed)) ControlChannelPayload;       /**< ControlChannelPayload */
+
+static_assert(MAX_DATA_LEN >= sizeof(ControlChannelPayload),
+              "MAX_DATA_LEN must be >= sizeof(ControlChannelPayload) to avoid buffer overflows on control channel.");
 
 #endif /* SERIALMUXPROT_COMMON_H_ */
 /** @} */

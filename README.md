@@ -40,6 +40,7 @@ lib_deps =
 ```bash
 cd python/SerialMuxProt
 ```
+
 - Install the package using `pip`:
 
 ```bash
@@ -269,3 +270,13 @@ The `SerialMuxChannels.h` file should be used to define the structures and chann
 This file defines the Channel Names, DLCs, and the data structures of the payloads.
 It is important to note that the structs must include the `packed` attribute in order to ensure the access to the data correctly.
 A sample file can be found in [here](examples/SerialMuxChannels.h).
+
+---
+
+## Maximum Data Length
+
+Per default, the `MAX_DATA_LEN` is set in `src\SerialMuxProtCommon.hpp` to a reasonable value of 32 bytes. If your application requires a larger frame size, you can redefine this variable using compiler defines.
+
+```bash
+-DMAX_DATA_LEN=100
+```
